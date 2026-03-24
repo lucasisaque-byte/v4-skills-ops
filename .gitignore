@@ -1,6 +1,7 @@
 node_modules/
 .DS_Store
 *.bv
+*.log
 __pycache__/
 *.pyc
 .env
