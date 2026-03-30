@@ -1,13 +1,18 @@
 """
-Abstração genérica para rodar qualquer skill como uma chamada ao Claude.
+Executa skills usando OpenAI como LLM principal.
 """
 import os
+import json
 from pathlib import Path
-import anthropic
+from openai import OpenAI
 
 SKILLS_DIR = Path(__file__).parent.parent.parent / "skills"
-MODEL = os.getenv("MODEL", "claude-sonnet-4-6")
+MODEL = os.getenv("OPENAI_MODEL", "gpt-4o")
 MAX_TOKENS = int(os.getenv("MAX_TOKENS", "8096"))
+
+
+def _client() -> OpenAI:
+    return OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
 
 def load_skill(skill_name: str) -> str:
@@ -19,7 +24,7 @@ def load_skill(skill_name: str) -> str:
 
 
 def build_context_block(context: dict) -> str:
-    """Constrói um bloco de contexto do cliente para injetar no user message"""
+    """Constrói bloco de contexto do cliente para injetar no prompt"""
     parts = [f"## Contexto do Cliente: {context.get('client_name', '')}"]
 
     if context.get("dcc"):
@@ -36,7 +41,6 @@ def build_context_block(context: dict) -> str:
         parts.append(f"\n### Design System Social Media\n{brand['design_system']}")
 
     if brand.get("tokens"):
-        import json
         parts.append(f"\n### Design Tokens\n```json\n{json.dumps(brand['tokens'], ensure_ascii=False, indent=2)}\n```")
 
     return "\n".join(parts)
@@ -44,38 +48,39 @@ def build_context_block(context: dict) -> str:
 
 def run_skill(skill_name: str, prompt: str, client_context: dict | None = None) -> str:
     """Executa uma skill sincronamente e retorna o texto completo"""
-    client = anthropic.Anthropic(api_key=os.getenv("ANTHROPIC_API_KEY"))
     system_prompt = load_skill(skill_name)
-
     user_message = prompt
     if client_context:
-        context_block = build_context_block(client_context)
-        user_message = f"{context_block}\n\n---\n\n{prompt}"
+        user_message = f"{build_context_block(client_context)}\n\n---\n\n{prompt}"
 
-    message = client.messages.create(
+    response = _client().chat.completions.create(
         model=MODEL,
         max_tokens=MAX_TOKENS,
-        system=system_prompt,
-        messages=[{"role": "user", "content": user_message}],
+        messages=[
+            {"role": "system", "content": system_prompt},
+            {"role": "user", "content": user_message},
+        ],
     )
-    return message.content[0].text
+    return response.choices[0].message.content
 
 
 def stream_skill(skill_name: str, prompt: str, client_context: dict | None = None):
     """Executa uma skill com streaming — yield chunks de texto"""
-    client = anthropic.Anthropic(api_key=os.getenv("ANTHROPIC_API_KEY"))
     system_prompt = load_skill(skill_name)
-
     user_message = prompt
     if client_context:
-        context_block = build_context_block(client_context)
-        user_message = f"{context_block}\n\n---\n\n{prompt}"
+        user_message = f"{build_context_block(client_context)}\n\n---\n\n{prompt}"
 
-    with client.messages.stream(
+    stream = _client().chat.completions.create(
         model=MODEL,
         max_tokens=MAX_TOKENS,
-        system=system_prompt,
-        messages=[{"role": "user", "content": user_message}],
-    ) as stream:
-        for text in stream.text_stream:
-            yield text
+        stream=True,
+        messages=[
+            {"role": "system", "content": system_prompt},
+            {"role": "user", "content": user_message},
+        ],
+    )
+    for chunk in stream:
+        delta = chunk.choices[0].delta.content
+        if delta:
+            yield delta

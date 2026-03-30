@@ -7,9 +7,11 @@ import { ClientRequired } from '@/components/ClientRequired'
 import { StreamOutput } from '@/components/StreamOutput'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
-import { Anchor, Copy, Check } from 'lucide-react'
+import { Anchor, Copy, Check, Loader2, Zap } from 'lucide-react'
 
 const platforms = ['Instagram', 'LinkedIn', 'TikTok/Reels']
+
+type Phase = 'idle' | 'briefing' | 'generating' | 'done'
 
 export default function HooksPage() {
   return (
@@ -24,30 +26,36 @@ function HooksFeature() {
   const [theme, setTheme] = useState('')
   const [platform, setPlatform] = useState('Instagram')
   const [output, setOutput] = useState('')
-  const [isStreaming, setIsStreaming] = useState(false)
+  const [phase, setPhase] = useState<Phase>('idle')
+  const [amMeta, setAmMeta] = useState<{ skill?: string; observacoes?: string } | null>(null)
   const [copied, setCopied] = useState(false)
-  const stopRef = useState<(() => void) | null>(null)
+
+  const phaseLabel: Record<Phase, string> = {
+    idle: '',
+    briefing: 'Account Manager montando briefing...',
+    generating: 'Gerando hooks...',
+    done: '',
+  }
 
   const generate = () => {
     if (!theme.trim() || !activeClient) return
     setOutput('')
-    setIsStreaming(true)
+    setAmMeta(null)
+    setPhase('briefing')
 
-    const stop = api.streamGenerate(
+    api.streamGenerate(
       '/generate/hooks',
       { client_id: activeClient.id, theme, platform },
       (chunk) => setOutput((prev) => prev + chunk),
-      () => setIsStreaming(false),
-      (e) => { setIsStreaming(false); setOutput(`Erro: ${e.message}`) }
+      () => setPhase('done'),
+      (e) => { setPhase('idle'); setOutput(`Erro: ${e.message}`) },
+      (ev, meta) => {
+        if (ev === 'am_done') { setAmMeta(meta as any); setPhase('generating') }
+      },
     )
-    stopRef[1](stop)
   }
 
-  const copyAll = () => {
-    navigator.clipboard.writeText(output)
-    setCopied(true)
-    setTimeout(() => setCopied(false), 2000)
-  }
+  const isStreaming = phase === 'briefing' || phase === 'generating'
 
   return (
     <div className="max-w-2xl mx-auto space-y-6">
@@ -58,12 +66,11 @@ function HooksFeature() {
         <div>
           <h1 className="text-lg font-semibold">Hook Engineer</h1>
           <p className="text-xs text-muted-foreground">
-            5 variações para <span className="text-foreground font-medium">{activeClient?.name}</span>
+            Para <span className="text-foreground font-medium">{activeClient?.name}</span>
           </p>
         </div>
       </div>
 
-      {/* Formulário */}
       <div className="p-4 rounded-xl border border-border/60 bg-card space-y-4">
         <div className="space-y-1.5">
           <label className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Tema do post</label>
@@ -95,25 +102,38 @@ function HooksFeature() {
           </div>
         </div>
 
-        <Button
-          onClick={generate}
-          disabled={!theme.trim() || isStreaming}
-          className="w-full"
-        >
-          {isStreaming ? 'Gerando hooks...' : 'Gerar 5 Hooks'}
+        <Button onClick={generate} disabled={!theme.trim() || isStreaming} className="w-full">
+          {isStreaming
+            ? <><Loader2 className="w-3.5 h-3.5 mr-2 animate-spin" />{phaseLabel[phase]}</>
+            : 'Gerar 5 Hooks'
+          }
         </Button>
       </div>
 
-      {/* Output */}
+      {/* Status do orquestrador */}
+      {amMeta && (
+        <div className="flex items-start gap-2 px-3 py-2.5 rounded-lg bg-yellow-400/5 border border-yellow-400/20 text-xs text-yellow-300">
+          <Zap className="w-3.5 h-3.5 mt-0.5 shrink-0" />
+          <div>
+            <span className="font-medium">Account Manager</span>
+            {amMeta.observacoes && <span className="text-yellow-300/70"> — {amMeta.observacoes}</span>}
+          </div>
+        </div>
+      )}
+
       {(output || isStreaming) && (
         <div className="space-y-2">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               <span className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Resultado</span>
-              {isStreaming && <Badge variant="secondary" className="text-xs animate-pulse">gerando...</Badge>}
+              {isStreaming && <Badge variant="secondary" className="text-xs animate-pulse">{phaseLabel[phase]}</Badge>}
             </div>
-            {output && !isStreaming && (
-              <Button size="sm" variant="ghost" className="h-7 gap-1.5 text-xs" onClick={copyAll}>
+            {output && phase === 'done' && (
+              <Button size="sm" variant="ghost" className="h-7 gap-1.5 text-xs" onClick={() => {
+                navigator.clipboard.writeText(output)
+                setCopied(true)
+                setTimeout(() => setCopied(false), 2000)
+              }}>
                 {copied ? <Check className="w-3 h-3 text-green-400" /> : <Copy className="w-3 h-3" />}
                 {copied ? 'Copiado!' : 'Copiar tudo'}
               </Button>

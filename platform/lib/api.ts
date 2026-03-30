@@ -30,8 +30,15 @@ export const api = {
     return res.json()
   },
 
-  // SSE streaming helper
-  streamGenerate: (endpoint: string, data: object, onChunk: (text: string) => void, onDone: () => void, onError: (e: Error) => void) => {
+  // SSE streaming helper com suporte a eventos de fase do orquestrador
+  streamGenerate: (
+    endpoint: string,
+    data: object,
+    onChunk: (text: string) => void,
+    onDone: () => void,
+    onError: (e: Error) => void,
+    onPhase?: (phase: string, meta?: object) => void,
+  ) => {
     const controller = new AbortController()
 
     fetch(`${API_BASE}${endpoint}`, {
@@ -51,16 +58,28 @@ export const api = {
           const lines = chunk.split('\n')
           for (const line of lines) {
             if (line.startsWith('data: ')) {
-              const data = line.slice(6)
-              if (data === '[DONE]') {
-                onDone()
-                return
-              }
+              const raw = line.slice(6)
+              if (raw === '[DONE]') { onDone(); return }
               try {
-                const parsed = JSON.parse(data)
-                if (parsed.text) onChunk(parsed.text)
+                const parsed = JSON.parse(raw)
+                if (parsed.text) {
+                  onChunk(parsed.text)
+                } else if (parsed.event) {
+                  // Evento de fase do orquestrador
+                  const ev: string = parsed.event
+                  if (ev.startsWith('__AM_DONE__')) {
+                    try {
+                      const meta = JSON.parse(ev.replace('__AM_DONE__', ''))
+                      onPhase?.('am_done', meta)
+                    } catch { onPhase?.('am_done') }
+                  } else if (ev === '__AM_START__') {
+                    onPhase?.('am_start')
+                  } else if (ev === '__SKILL_START__') {
+                    onPhase?.('skill_start')
+                  }
+                }
               } catch {
-                onChunk(data)
+                onChunk(raw)
               }
             }
           }
