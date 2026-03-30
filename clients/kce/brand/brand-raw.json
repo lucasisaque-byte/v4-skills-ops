@@ -1,0 +1,311 @@
+{
+  "cliente": "kce",
+  "nome_exibicao": "KCE Logistics",
+  "segmento": "Logística B2B — Freight forwarding, Fulfillment & Warehousing (EUA/Internacional)",
+  "data_coleta": "2026-03-24",
+  "versao": "1.0.0",
+
+  "fontes": {
+    "sites_rastreados": ["https://kcelogistics.com/"],
+    "screenshots_capturados": [],
+    "assets_locais_lidos": [
+      "clients/kce/criativos/key-visuals/kv-01.png",
+      "clients/kce/criativos/key-visuals/kv-02.png",
+      "clients/kce/criativos/key-visuals/kv-03.png",
+      "clients/kce/criativos/key-visuals/desdobramento-01.png",
+      "clients/kce/criativos/key-visuals/desdobramento-02.png",
+      "clients/kce/criativos/key-visuals/desdobramento-03.png",
+      "clients/kce/criativos/ads/ads-01-frete-internacional.png",
+      "clients/kce/criativos/ads/ads-02-fulfillment.png",
+      "clients/kce/criativos/social-media/sm-14-01-slide-01.png",
+      "clients/kce/criativos/social-media/sm-14-01-slide-02.png",
+      "clients/kce/criativos/social-media/sm-05-01.png"
+    ],
+    "redes_sociais": ["https://www.facebook.com/kcelogistics"],
+    "fases_executadas": ["1A", "1C", "1D"],
+    "fases_puladas": ["1B — Playwright MCP não disponível na sessão. Screenshots do site não capturados."],
+    "notas": "CSS extraído diretamente via fetch do main.css do tema WordPress customizado 'KCE'. Paleta confirmada cruzando CSS vars com análise visual dos criativos — alta coerência entre os dois. Nenhum documento de brand guide local disponível; criativos foram a fonte primária de validação do CSS."
+  },
+
+  "paleta": {
+    "primaria": [
+      {
+        "hex": "#F15A22",
+        "rgb": "241, 90, 34",
+        "nome": "Laranja Primário",
+        "uso": "CTA buttons, banners de destaque, blocos de fundo em anúncios, marcadores de bullet, barra de acento, elementos de hover",
+        "confianca": "alta",
+        "origem": "CSS var --primary-500 + confirmado em todos os criativos analisados"
+      }
+    ],
+    "secundaria": [
+      {
+        "hex": "#1C2336",
+        "rgb": "28, 35, 54",
+        "nome": "Navy Institucional",
+        "uso": "Fundos de seção escura, header, overlays sobre foto, texto de alto contraste",
+        "confianca": "alta",
+        "origem": "CSS var --secondary-500 + confirmado em criativos com dark background"
+      },
+      {
+        "hex": "#191C24",
+        "rgb": "25, 28, 36",
+        "nome": "Preto Base",
+        "uso": "Background global mais escuro, navbar, footer",
+        "confianca": "alta",
+        "origem": "CSS var --base-dark"
+      }
+    ],
+    "neutros": [
+      {
+        "hex": "#FFFFFF",
+        "rgb": "255, 255, 255",
+        "nome": "Branco",
+        "uso": "Background principal do site, texto sobre fundos escuros/laranja, cards",
+        "confianca": "alta",
+        "origem": "CSS var --base-white + uso consistente em todos os criativos"
+      },
+      {
+        "hex": "#5E6E8D",
+        "rgb": "94, 110, 141",
+        "nome": "Azul-Cinza Parágrafo",
+        "uso": "Corpo de texto secundário, subtítulos, descrições",
+        "confianca": "alta",
+        "origem": "CSS var --paragrafo"
+      },
+      {
+        "hex": "#F3F4F6",
+        "rgb": "243, 244, 246",
+        "nome": "Cinza Claro",
+        "uso": "Backgrounds alternativos de seção, cards com fundo claro",
+        "confianca": "alta",
+        "origem": "CSS var --gray-100"
+      },
+      {
+        "hex": "#4B5563",
+        "rgb": "75, 85, 99",
+        "nome": "Cinza Texto",
+        "uso": "Texto de apoio, metadados, labels",
+        "confianca": "media",
+        "origem": "CSS var --gray-600"
+      }
+    ],
+    "suporte": [
+      {
+        "hex": "#F69B79",
+        "rgb": "246, 155, 121",
+        "nome": "Laranja Claro",
+        "uso": "Hover states, gradientes, versões atenuadas do laranja primário",
+        "confianca": "media",
+        "origem": "CSS var --primary-400"
+      },
+      {
+        "hex": "#FDE2D9",
+        "rgb": "253, 226, 217",
+        "nome": "Laranja Pastel",
+        "uso": "Backgrounds de highlight suave, tags, badges",
+        "confianca": "media",
+        "origem": "CSS var --primary-300"
+      },
+      {
+        "hex": "#99310A",
+        "rgb": "153, 49, 10",
+        "nome": "Laranja Escuro",
+        "uso": "Hover ativo em botões, estados de pressão, destaques intensos",
+        "confianca": "media",
+        "origem": "CSS var --primary-600"
+      }
+    ]
+  },
+
+  "tipografia": {
+    "familia_principal": "Roboto",
+    "fonte_google_fonts": true,
+    "url_import": "https://fonts.googleapis.com/css2?family=Roboto:ital,wght@0,100..900;1,100..900&display=swap",
+    "fallbacks": ["Arial", "Helvetica", "sans-serif"],
+    "pesos_usados": [100, 300, 400, 500, 600, 700, 800, 900],
+    "hierarquia": {
+      "display": {
+        "familia": "Roboto",
+        "peso": 300,
+        "tamanho_referencia": "4rem",
+        "estilo": "uppercase, letter-spacing amplo"
+      },
+      "h1": {
+        "familia": "Roboto",
+        "peso": 600,
+        "tamanho_referencia": "3rem (desktop) / 2.5rem (tablet)"
+      },
+      "h2": {
+        "familia": "Roboto",
+        "peso": 600,
+        "tamanho_referencia": "2.5rem"
+      },
+      "h3": {
+        "familia": "Roboto",
+        "peso": 600,
+        "tamanho_referencia": "1.75rem"
+      },
+      "body": {
+        "familia": "Roboto",
+        "peso": 400,
+        "tamanho_referencia": "1rem"
+      }
+    },
+    "padroes_observados_criativos": [
+      "CTA buttons sempre em ALL CAPS, peso 500-600",
+      "Highlights/banners de texto em ALL CAPS sobre fundo laranja",
+      "Headline em peso 700-800 para palavras-chave (ex: 'on-time delivery', 'competitive advantage')",
+      "Mix de pesos na mesma linha: frase em 400 + palavra-chave em 700 (padrão frequente)",
+      "Subtítulos e bullets em 400 ou 500, corpo limpo e sem serifa"
+    ],
+    "proibido": ["serifadas", "handwriting", "display decorativas"],
+    "notas": "Roboto é usada com amplitude total de pesos (100-900). Nos criativos, a marca usa contrastes de peso intensos dentro de uma mesma frase para criar hierarquia sem mudar de família."
+  },
+
+  "logo": {
+    "descricao_simbolo": "Logotipo wordmark composto por 'KCE' em peso extra-bold (800-900) seguido de 'Logistics' em peso leve (300-400). Uma pequena marca subscrita aparece após 'Logistics' (possivelmente trademark ou elemento decorativo de identidade). Não há ícone ou símbolo separado do texto — a marca é inteiramente tipográfica.",
+    "significado_inferido": "A composição KCE bold + Logistics light cria contraste visual que reforça a dualidade da marca: força/capacidade (KCE) e precisão/serviço (Logistics). O wordmark sem ícone transmite objetividade e confiança corporativa.",
+    "composicao": "Wordmark tipográfico puro — sem símbolo separado. Dois pesos contrastantes na mesma linha.",
+    "variacoes_disponiveis": [
+      {
+        "arquivo": "https://kcelogistics.com/wp-content/uploads/2026/02/logoKCE.png",
+        "descricao": "Logo horizontal colorida — KCE laranja/preto + Logistics preto",
+        "fundo_recomendado": "claro",
+        "uso_recomendado": "Header do site, assinatura em materiais sobre fundo branco/claro"
+      },
+      {
+        "arquivo": "criativos/key-visuals/kv-01.png (extraído visualmente)",
+        "descricao": "Logo horizontal branca — KCE + Logistics em branco total",
+        "fundo_recomendado": "escuro ou colorido",
+        "uso_recomendado": "Footer, materiais sobre fundo navy ou laranja"
+      },
+      {
+        "arquivo": "criativos/key-visuals/desdobramento-01.png (extraído visualmente)",
+        "descricao": "Logo reduzida apenas 'KCE' com subscrito — versão compacta para espaços pequenos",
+        "fundo_recomendado": "escuro ou colorido",
+        "uso_recomendado": "Topo de post, favicon, versão compacta"
+      }
+    ],
+    "arquivos_fonte": ["Não localizados localmente — buscar com cliente"],
+    "notas": "O logo possui uma versão com 'KCE' em laranja (#F15A22) + 'Logistics' em preto para fundos claros, e uma versão totalmente branca para fundos escuros/laranja. Nos criativos de social media, a versão branca é sempre usada quando o fundo é navy ou laranja."
+  },
+
+  "personalidade": {
+    "arquetipos": ["Governante", "Herói"],
+    "adjetivos": ["direto", "confiante", "profissional", "ágil", "orientado a resultado"],
+    "tom_de_voz": "Assertivo e focado em performance. Fala a linguagem do decisor B2B — ROI, velocidade, controle, precisão. Sem floreios, sem metáforas vagas. Cada headline é uma promessa mensurável.",
+    "posicionamento": "Parceiro estratégico de logística global para empresas que não aceitam erros operacionais — foco em warehousing, fulfillment e frete internacional com tecnologia como diferencial.",
+    "nao_e": ["caloroso/emocional", "informal", "descontraído", "decorativo", "genérico"]
+  },
+
+  "padroes_layout": {
+    "border_radius": {
+      "botoes": "4px (quase reto)",
+      "cards": "8-12px",
+      "containers": "0-8px",
+      "descricao": "Valores baixos a moderados — marca sóbria, corporativa. Sem arredondamentos excessivos. Reforça posicionamento de autoridade e precisão."
+    },
+    "espacamento": {
+      "base": "8px",
+      "secoes": "Padding vertical generoso — estimado 80-120px entre seções",
+      "descricao": "Espaçamento amplo entre seções transmite organização e profissionalismo. Sem sensação de 'empilhado'."
+    },
+    "container_max_width": "1370px",
+    "estrutura_secoes": "Dark navy (hero/intro) → Branco (conteúdo/serviços) → Cinza claro (prova social/dados) → Dark navy (CTA/footer)",
+    "estilo_geral": "Split layout predominante (foto operacional + bloco de texto). Fotos reais de operações logísticas (armazéns, carga aérea, navios, entregadores). Sem ilustrações ou elementos gráficos abstratos. Visual direto ao ponto."
+  },
+
+  "padroes_criativos": {
+    "formatos_observados": [
+      {
+        "tipo": "Key Visual (KV) horizontal",
+        "dimensoes_estimadas": "1920x1080 ou 1200x628 (proporção ~16:9)",
+        "composicao": "Split: bloco branco com texto à esquerda + foto operacional à direita. Logo no canto inferior direito. Bloco laranja no topo direito como elemento de marca.",
+        "uso": "Ads de display, LinkedIn, materiais institucionais"
+      },
+      {
+        "tipo": "Ad Feed vertical",
+        "dimensoes_estimadas": "1080x1350 (4:5)",
+        "composicao": "Foto operacional full-bleed no topo + bloco laranja sólido na metade inferior com texto branco + logo branca. Alternativa: foto com overlay dark + bloco laranja flutuante sobre a foto.",
+        "uso": "Meta Ads, Instagram Feed"
+      },
+      {
+        "tipo": "Carrossel social media",
+        "dimensoes_estimadas": "1080x1350 (4:5) por slide",
+        "composicao": "Slide 1: foto dramática com overlay navy + headline branca. Slides intermediários: foto no topo + bloco laranja sólido na base com texto. Slide final: logo prominente.",
+        "uso": "Instagram, LinkedIn"
+      }
+    ],
+    "elementos_recorrentes": [
+      "Bloco retangular laranja (#F15A22) sem border-radius ou com raio mínimo — usado como fundo de headline, highlight ou CTA",
+      "Marcadores de bullet em laranja (quadrado ou círculo pequeno)",
+      "Foto operacional com equipe usando colete amarelo/laranja de segurança",
+      "CTA button: contorno laranja com texto laranja (outlined) OU fundo laranja com texto branco (solid), sempre ALL CAPS",
+      "Linha divisória horizontal em laranja (separador entre seções de texto)",
+      "Logo sempre no canto — bottom-right em horizontais, bottom-center ou top-right em verticais"
+    ],
+    "fotografia": "Fotografia editorial/stock de alta qualidade mostrando operações reais: armazéns organizados, cargas aéreas, navios de container, equipes com EPI. Paleta fotográfica predominantemente fria (azul/cinza de hangares, céus, oceano) contrastando com os laranjas operacionais (vests, equipamentos). Sem lifestyle ou pessoas em contexto emocional."
+  },
+
+  "referencias_visuais": {
+    "screenshots": [],
+    "referencias_mercado": [],
+    "criativos_existentes": [
+      {
+        "arquivo": "criativos/key-visuals/kv-01.png",
+        "tipo": "Key Visual horizontal — Warehousing",
+        "padroes_observados": "Split layout. Fundo branco + foto armazém. Bloco laranja highlight no headline. Bullets com marcadores laranjas. CTA outlined laranja. Logo bottom-right."
+      },
+      {
+        "arquivo": "criativos/key-visuals/kv-02.png",
+        "tipo": "Key Visual horizontal — Fulfillment",
+        "padroes_observados": "Layout invertido (foto à esq, texto à dir). Fundo branco. Headline mista (regular + bold laranja inline). CTA sólido laranja. Logo top-right."
+      },
+      {
+        "arquivo": "criativos/key-visuals/kv-03.png",
+        "tipo": "Key Visual horizontal — Air Freight",
+        "padroes_observados": "Foto de avião full-right. Display class (uppercase, peso leve) para número/destaque. Fundo branco puro. CTA outlined laranja."
+      },
+      {
+        "arquivo": "criativos/key-visuals/desdobramento-01.png",
+        "tipo": "Post quadrado — Warehousing institucional",
+        "padroes_observados": "Bloco laranja full-top com logo compacta branca. Card branco central com headline ALL CAPS bold + highlight laranja + corpo regular. Foto operacional na base. CTA outlined laranja."
+      },
+      {
+        "arquivo": "criativos/ads/ads-01-frete-internacional.png",
+        "tipo": "Ad Feed vertical — Frete internacional",
+        "padroes_observados": "Foto de navio aérea. Bloco laranja flutuante (sem borda) com texto branco. Mix de pesos: regular + bold. Bullets com •. Logo branca bottom-center."
+      },
+      {
+        "arquivo": "criativos/ads/ads-02-fulfillment.png",
+        "tipo": "Ad Feed vertical — Fulfillment",
+        "padroes_observados": "Foto com fade para branco. Texto preto sobre branco. Linha divisória laranja. CTA box sólido preto. Logo colorida bottom-left."
+      },
+      {
+        "arquivo": "criativos/social-media/sm-14-01-slide-01.png",
+        "tipo": "Carrossel — Slide 1 (capa)",
+        "padroes_observados": "Split vertical de duas fotos (ar + oceano) com overlay navy escuro. Texto branco centralizado. Seta → como elemento de continuidade. Logo branca bottom-center."
+      },
+      {
+        "arquivo": "criativos/social-media/sm-14-01-slide-02.png",
+        "tipo": "Carrossel — Slide 2 (conteúdo)",
+        "padroes_observados": "Foto top, bloco laranja sólido base. Texto branco. Mix regular/bold. Seta → continuidade. Paleta: laranja + branco + foto fria."
+      },
+      {
+        "arquivo": "criativos/social-media/sm-05-01.png",
+        "tipo": "Post vertical — Institucional Miami Hub",
+        "padroes_observados": "Fundo branco + foto lateral. Texto preto com acento laranja (headline colorida). Linha horizontal laranja como divisor. Logo bottom-left."
+      }
+    ]
+  },
+
+  "lacunas": [
+    "Logo em arquivo vetorial não localizado — solicitar .ai, .svg ou .eps ao cliente",
+    "Brand guide oficial não encontrado — este brand-raw.json é a primeira documentação formal",
+    "Screenshots do site não capturados (Playwright indisponível) — recomendado capturar manualmente as seções: hero, navbar, footer, cards de serviços",
+    "Paleta de cores do site não inclui informação sobre uso de gradientes — verificar seções internas",
+    "Tom de voz em português não mapeado — site é en_US, verificar se há materiais em PT-BR para clientes brasileiros",
+    "Redes sociais (Instagram, LinkedIn) não analisadas — podem revelar padrões adicionais de conteúdo"
+  ]
+}

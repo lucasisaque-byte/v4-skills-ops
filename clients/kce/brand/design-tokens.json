@@ -1,0 +1,131 @@
+{
+  "meta": {
+    "cliente": "kce",
+    "nome_exibicao": "KCE Logistics",
+    "versao": "1.0.0",
+    "gerado_em": "2026-03-24",
+    "fonte": "brand-raw.json v1.0.0"
+  },
+
+  "color": {
+    "primary": {
+      "DEFAULT": { "value": "#F15A22", "type": "color", "description": "Laranja Primário — CTAs, highlights, blocos de fundo" },
+      "light":   { "value": "#F69B79", "type": "color", "description": "Laranja Claro — hover states, versões atenuadas" },
+      "lighter": { "value": "#FDE2D9", "type": "color", "description": "Laranja Pastel — backgrounds suaves, badges" },
+      "dark":    { "value": "#99310A", "type": "color", "description": "Laranja Escuro — hover ativo, estados de pressão" },
+      "darker":  { "value": "#4D1805", "type": "color", "description": "Laranja Muito Escuro — uso raro, contraste máximo" }
+    },
+    "secondary": {
+      "DEFAULT": { "value": "#1C2336", "type": "color", "description": "Navy Institucional — fundos escuros, header, overlays" },
+      "dark":    { "value": "#191C24", "type": "color", "description": "Preto Base — background mais escuro, navbar, footer" }
+    },
+    "neutral": {
+      "white":   { "value": "#FFFFFF", "type": "color" },
+      "black":   { "value": "#000000", "type": "color" },
+      "50":      { "value": "#F9FAFB", "type": "color" },
+      "100":     { "value": "#F3F4F6", "type": "color", "description": "Cinza Claro — backgrounds alternativos de seção" },
+      "200":     { "value": "#E5E7EB", "type": "color" },
+      "300":     { "value": "#D1D5DB", "type": "color" },
+      "400":     { "value": "#9CA3AF", "type": "color" },
+      "500":     { "value": "#6B7280", "type": "color" },
+      "600":     { "value": "#4B5563", "type": "color", "description": "Cinza Texto — texto de apoio, metadados" },
+      "700":     { "value": "#2C333C", "type": "color" },
+      "800":     { "value": "#1F2937", "type": "color" }
+    },
+    "text": {
+      "primary":   { "value": "#191C24", "type": "color", "description": "Texto principal sobre fundo claro" },
+      "secondary": { "value": "#5E6E8D", "type": "color", "description": "Azul-Cinza Parágrafo — texto de suporte" },
+      "muted":     { "value": "#4B5563", "type": "color", "description": "Texto suave — metadados, captions" },
+      "inverse":   { "value": "#FFFFFF", "type": "color", "description": "Texto sobre fundos escuros ou laranja" },
+      "accent":    { "value": "#F15A22", "type": "color", "description": "Texto de destaque — palavras-chave em laranja" }
+    },
+    "background": {
+      "default":  { "value": "#FFFFFF", "type": "color" },
+      "subtle":   { "value": "#F3F4F6", "type": "color", "description": "Fundo alternativo de seção" },
+      "dark":     { "value": "#1C2336", "type": "color", "description": "Fundo navy para seções escuras" },
+      "darker":   { "value": "#191C24", "type": "color", "description": "Fundo mais escuro para footer/navbar" },
+      "accent":   { "value": "#F15A22", "type": "color", "description": "Fundo laranja para CTAs e blocos de destaque" }
+    },
+    "border": {
+      "default":  { "value": "#E5E7EB", "type": "color" },
+      "accent":   { "value": "#F15A22", "type": "color", "description": "Borda de elementos com acento laranja" },
+      "dark":     { "value": "#2C333C", "type": "color" }
+    }
+  },
+
+  "typography": {
+    "fontFamily": {
+      "primary": { "value": "'Roboto', Arial, Helvetica, sans-serif", "type": "fontFamily" },
+      "import":  { "value": "https://fonts.googleapis.com/css2?family=Roboto:ital,wght@0,100..900;1,100..900&display=swap", "type": "url" }
+    },
+    "fontWeight": {
+      "thin":      { "value": 100, "type": "fontWeight" },
+      "light":     { "value": 300, "type": "fontWeight" },
+      "regular":   { "value": 400, "type": "fontWeight" },
+      "medium":    { "value": 500, "type": "fontWeight" },
+      "semibold":  { "value": 600, "type": "fontWeight" },
+      "bold":      { "value": 700, "type": "fontWeight" },
+      "extrabold": { "value": 800, "type": "fontWeight" },
+      "black":     { "value": 900, "type": "fontWeight" }
+    },
+    "fontSize": {
+      "display": { "value": "4rem",    "type": "fontSize", "description": "64px — números/stats em ALL CAPS, peso 300" },
+      "h1":      { "value": "3rem",    "type": "fontSize", "description": "48px — título principal de página" },
+      "h2":      { "value": "2.5rem",  "type": "fontSize", "description": "40px — títulos de seção" },
+      "h3":      { "value": "1.75rem", "type": "fontSize", "description": "28px — subtítulos, títulos de card" },
+      "h4":      { "value": "1.5rem",  "type": "fontSize", "description": "24px — títulos de item" },
+      "h5":      { "value": "1.25rem", "type": "fontSize", "description": "20px — labels e títulos pequenos" },
+      "body-lg": { "value": "1.125rem","type": "fontSize", "description": "18px — parágrafos de destaque" },
+      "body":    { "value": "1rem",    "type": "fontSize", "description": "16px — corpo padrão" },
+      "body-sm": { "value": "0.875rem","type": "fontSize", "description": "14px — descrições secundárias" },
+      "caption": { "value": "0.75rem", "type": "fontSize", "description": "12px — legendas, metadados" }
+    },
+    "lineHeight": {
+      "tight":   { "value": "120%", "type": "lineHeight", "description": "Display e headlines grandes" },
+      "heading": { "value": "130%", "type": "lineHeight", "description": "H1–H5" },
+      "body":    { "value": "150%", "type": "lineHeight", "description": "Corpo de texto e parágrafos" }
+    },
+    "letterSpacing": {
+      "tight":   { "value": "-0.01em", "type": "letterSpacing" },
+      "normal":  { "value": "0",       "type": "letterSpacing" },
+      "wide":    { "value": "0.05em",  "type": "letterSpacing", "description": "Display class e ALL CAPS" },
+      "wider":   { "value": "0.1em",   "type": "letterSpacing" }
+    }
+  },
+
+  "spacing": {
+    "1":  { "value": "4px",   "type": "spacing" },
+    "2":  { "value": "8px",   "type": "spacing", "description": "Base unit" },
+    "3":  { "value": "12px",  "type": "spacing" },
+    "4":  { "value": "16px",  "type": "spacing" },
+    "5":  { "value": "20px",  "type": "spacing" },
+    "6":  { "value": "24px",  "type": "spacing" },
+    "8":  { "value": "32px",  "type": "spacing" },
+    "10": { "value": "40px",  "type": "spacing" },
+    "12": { "value": "48px",  "type": "spacing" },
+    "16": { "value": "64px",  "type": "spacing" },
+    "20": { "value": "80px",  "type": "spacing" },
+    "24": { "value": "96px",  "type": "spacing", "description": "Padding vertical padrão entre seções" },
+    "30": { "value": "120px", "type": "spacing", "description": "Padding vertical generoso entre seções" },
+    "container-max": { "value": "1370px", "type": "dimension", "description": "Largura máxima do container" },
+    "container-padding": { "value": "20px", "type": "spacing", "description": "Padding horizontal do container" }
+  },
+
+  "borderRadius": {
+    "none":      { "value": "0px",    "type": "borderRadius" },
+    "button":    { "value": "4px",    "type": "borderRadius", "description": "Botões — quase reto, corporativo" },
+    "card":      { "value": "8px",    "type": "borderRadius", "description": "Cards padrão" },
+    "card-lg":   { "value": "12px",   "type": "borderRadius", "description": "Cards maiores" },
+    "container": { "value": "8px",    "type": "borderRadius", "description": "Containers e modais" },
+    "full":      { "value": "9999px", "type": "borderRadius", "description": "Pills e badges" }
+  },
+
+  "shadow": {
+    "sm":  { "value": "0 1px 2px rgba(0,0,0,0.08)",                             "type": "shadow" },
+    "md":  { "value": "0 4px 6px rgba(0,0,0,0.08)",                             "type": "shadow" },
+    "lg":  { "value": "0 10px 15px rgba(0,0,0,0.10)",                           "type": "shadow" },
+    "card":{ "value": "0 2px 12px rgba(7,14,31,0.08)",                          "type": "shadow", "description": "Sombra padrão de card" }
+  },
+
+  "cssVariables": "/* KCE Logistics — Design Tokens · v1.0.0 · 2026-03-24 */\n/* Cole em :root { } no seu CSS principal */\n\n/* === CORES === */\n--color-primary:         #F15A22;\n--color-primary-light:   #F69B79;\n--color-primary-lighter: #FDE2D9;\n--color-primary-dark:    #99310A;\n\n--color-secondary:       #1C2336;\n--color-secondary-dark:  #191C24;\n\n--color-white:           #FFFFFF;\n--color-black:           #000000;\n--color-gray-50:         #F9FAFB;\n--color-gray-100:        #F3F4F6;\n--color-gray-200:        #E5E7EB;\n--color-gray-400:        #9CA3AF;\n--color-gray-600:        #4B5563;\n--color-gray-700:        #2C333C;\n\n--color-text:            #191C24;\n--color-text-secondary:  #5E6E8D;\n--color-text-muted:      #4B5563;\n--color-text-inverse:    #FFFFFF;\n--color-text-accent:     #F15A22;\n\n--color-bg:              #FFFFFF;\n--color-bg-subtle:       #F3F4F6;\n--color-bg-dark:         #1C2336;\n--color-bg-darker:       #191C24;\n--color-bg-accent:       #F15A22;\n\n/* === TIPOGRAFIA === */\n--font-primary:          'Roboto', Arial, Helvetica, sans-serif;\n\n--font-size-display:     4rem;\n--font-size-h1:          3rem;\n--font-size-h2:          2.5rem;\n--font-size-h3:          1.75rem;\n--font-size-h4:          1.5rem;\n--font-size-body-lg:     1.125rem;\n--font-size-body:        1rem;\n--font-size-body-sm:     0.875rem;\n--font-size-caption:     0.75rem;\n\n--font-weight-light:     300;\n--font-weight-regular:   400;\n--font-weight-medium:    500;\n--font-weight-semibold:  600;\n--font-weight-bold:      700;\n--font-weight-extrabold: 800;\n--font-weight-black:     900;\n\n/* === ESPAÇAMENTO === */\n--spacing-base:          8px;\n--section-padding-y:     96px;\n--container-max:         1370px;\n--container-padding-x:   20px;\n\n/* === BORDAS === */\n--radius-button:         4px;\n--radius-card:           8px;\n--radius-card-lg:        12px;\n--radius-container:      8px;"
+}

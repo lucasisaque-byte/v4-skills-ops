@@ -1,17 +1,16 @@
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import HTMLResponse
-from pydantic import BaseModel
-from typing import Optional
 import uvicorn
 
-from agent.orchestrator import Orchestrator
+from api.routes.clients import router as clients_router
+from api.routes.generate import router as generate_router
 
 app = FastAPI(
-    title="V4 Marketing Agent API",
-    description="Agente autônomo que orquestra skills de Copywriting, Designer e Social Media para criar landing pages.",
-    version="0.1.0",
-    docs_url=None,  # desativa o /docs padrão (CDN externo)
+    title="V4 Skills Platform API",
+    description="API da plataforma de produção de marketing com IA",
+    version="2.0.0",
+    docs_url=None,
     redoc_url=None,
 )
 
@@ -50,58 +49,18 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-
-class LandingPageRequest(BaseModel):
-    client_name: str
-    dcc_content: str
-    ucm_content: str
-    target_audience: Optional[str] = None
-    campaign_objective: Optional[str] = None
+app.include_router(clients_router)
+app.include_router(generate_router)
 
 
 @app.get("/")
 async def root():
-    return {"status": "ok", "message": "V4 Marketing Agent rodando."}
+    return {"status": "ok", "version": "2.0.0"}
 
 
 @app.get("/health")
 async def health():
     return {"status": "healthy"}
-
-
-@app.post("/generate/landing-page")
-async def generate_landing_page(request: LandingPageRequest):
-    """
-    Recebe DCC + UCM e retorna a landing page completa gerada pelo pipeline:
-    Copywriting → Designer → Social Media
-    """
-    orchestrator = Orchestrator()
-    try:
-        result = await orchestrator.run(
-            client_name=request.client_name,
-            dcc_content=request.dcc_content,
-            ucm_content=request.ucm_content,
-            target_audience=request.target_audience,
-            campaign_objective=request.campaign_objective,
-        )
-        return result
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
-
-
-@app.post("/generate/copy-only")
-async def generate_copy_only(request: LandingPageRequest):
-    """Roda apenas a skill de Copywriting."""
-    orchestrator = Orchestrator()
-    try:
-        result = await orchestrator.run_copywriting(
-            client_name=request.client_name,
-            dcc_content=request.dcc_content,
-            ucm_content=request.ucm_content,
-        )
-        return result
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
 
 
 if __name__ == "__main__":
