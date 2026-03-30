@@ -65,7 +65,6 @@ export const api = {
                 if (parsed.text) {
                   onChunk(parsed.text)
                 } else if (parsed.event) {
-                  // Evento de fase do orquestrador
                   const ev: string = parsed.event
                   if (ev.startsWith('__AM_DONE__')) {
                     try {
@@ -76,6 +75,11 @@ export const api = {
                     onPhase?.('am_start')
                   } else if (ev === '__SKILL_START__') {
                     onPhase?.('skill_start')
+                  } else if (ev.startsWith('__ERROR__')) {
+                    const msg = ev.replace('__ERROR__', '')
+                    onError(new Error(msg))
+                    onDone()
+                    return
                   }
                 }
               } catch {

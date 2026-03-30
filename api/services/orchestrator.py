@@ -79,16 +79,20 @@ def orchestrate_and_stream(
     Pipeline completo: Account Manager → skill especializada com streaming.
     Yield de eventos SSE com prefixo para diferenciar fase.
     """
-    # Fase 1: Account Manager monta o briefing
-    yield "__AM_START__"
-    briefing_data = orchestrate(task_description, skill_hint, client_context)
-    skill_alvo = briefing_data.get("skill_alvo", skill_hint)
-    briefing = briefing_data.get("briefing", task_description)
-    observacoes = briefing_data.get("observacoes", "")
+    try:
+        # Fase 1: Account Manager monta o briefing
+        yield "__AM_START__"
+        briefing_data = orchestrate(task_description, skill_hint, client_context)
+        skill_alvo = briefing_data.get("skill_alvo", skill_hint)
+        briefing = briefing_data.get("briefing", task_description)
+        observacoes = briefing_data.get("observacoes", "")
 
-    yield f"__AM_DONE__{json.dumps({'skill': skill_alvo, 'observacoes': observacoes}, ensure_ascii=False)}"
+        yield f"__AM_DONE__{json.dumps({'skill': skill_alvo, 'observacoes': observacoes}, ensure_ascii=False)}"
 
-    # Fase 2: Skill especializada gera o output com o briefing enriquecido
-    yield "__SKILL_START__"
-    for chunk in stream_skill(skill_alvo, briefing, client_context):
-        yield chunk
+        # Fase 2: Skill especializada gera o output com o briefing enriquecido
+        yield "__SKILL_START__"
+        for chunk in stream_skill(skill_alvo, briefing, client_context):
+            yield chunk
+
+    except Exception as e:
+        yield f"__ERROR__{str(e)}"
