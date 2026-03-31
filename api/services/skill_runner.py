@@ -7,7 +7,7 @@ from pathlib import Path
 from openai import OpenAI
 
 SKILLS_DIR = Path(__file__).parent.parent.parent / "skills"
-MODEL = os.getenv("OPENAI_MODEL", "gpt-4o")
+MODEL = os.getenv("OPENAI_MODEL", "gpt-4o-mini")
 MAX_TOKENS = int(os.getenv("MAX_TOKENS", "8096"))
 
 
