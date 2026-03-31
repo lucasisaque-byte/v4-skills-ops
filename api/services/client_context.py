@@ -140,8 +140,14 @@ def get_client_context(client_id: str) -> dict | None:
 
 
 def _find_file(base: Path, filename: str) -> Path | None:
-    """Encontra um arquivo pelo nome em qualquer nível dentro de base"""
+    """Encontra um arquivo pelo nome exato ou por padrão glob em qualquer nível"""
+    # Busca exata primeiro
     matches = list(base.rglob(filename))
+    if matches:
+        return matches[0]
+    # Busca flexível: *dcc* ou *ucm* para tolerar variações de nome
+    stem = filename.replace(".md", "").replace(".json", "")
+    matches = [p for p in base.rglob(f"*{stem}*") if p.is_file()]
     return matches[0] if matches else None
 
 
