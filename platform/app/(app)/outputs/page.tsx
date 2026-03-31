@@ -42,7 +42,7 @@ export default function OutputsPage() {
       .then((res) => setOutputs(res.outputs ?? []))
       .catch(() => setOutputs([]))
       .finally(() => setLoading(false))
-  }, [activeClient])
+  }, [])
 
   function openDetail(id: string) {
     if (selected === id) {
