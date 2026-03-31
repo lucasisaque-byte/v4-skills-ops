@@ -5,6 +5,7 @@ from pydantic import BaseModel
 from typing import Optional
 from api.services.orchestrator import orchestrate_and_stream
 from api.services.client_context import get_client_context
+from api.services.output_store import save_output
 
 router = APIRouter(prefix="/generate", tags=["generate"])
 
@@ -53,16 +54,27 @@ class ScriptRequest(BaseModel):
 
 # ─── Helpers ───────────────────────────────────────────────────────
 
-def _sse_stream(generator):
-    """Wraps generator into SSE format with phase markers"""
+def _sse_stream_and_save(generator, client_id: str, client_name: str, feature: str, prompt_summary: str):
+    """Wraps generator into SSE, acumula conteúdo e salva no final"""
     def event_stream():
+        accumulated = []
         for chunk in generator:
             if chunk.startswith("__"):
-                # Marcador de fase — envia como evento de controle
                 yield f"data: {json.dumps({'event': chunk})}\n\n"
             else:
+                accumulated.append(chunk)
                 yield f"data: {json.dumps({'text': chunk})}\n\n"
+
+        # Salva o output completo ao terminar
+        full_content = "".join(accumulated)
+        if full_content.strip():
+            try:
+                save_output(client_id, client_name, feature, prompt_summary, full_content)
+            except Exception:
+                pass  # Não bloqueia o streaming por erro de persistência
+
         yield "data: [DONE]\n\n"
+
     return StreamingResponse(event_stream(), media_type="text/event-stream")
 
 
@@ -81,7 +93,10 @@ def generate_hooks(req: HooksRequest):
     task = f"Gerar 5 variações de hook para o tema: {req.theme}. Plataforma: {req.platform}."
     if req.icp_override:
         task += f" ICP customizado: {req.icp_override}."
-    return _sse_stream(orchestrate_and_stream(task, "hook-engineer", ctx))
+    return _sse_stream_and_save(
+        orchestrate_and_stream(task, "hook-engineer", ctx),
+        req.client_id, ctx["client_name"], "hooks", req.theme
+    )
 
 
 @router.post("/copy")
@@ -94,7 +109,11 @@ def generate_copy(req: CopyRequest):
         task += f" Focar na persona: {req.persona_focus}."
     if req.output_format == "html":
         task += " Incluir também wireframe em HTML/CSS."
-    return _sse_stream(orchestrate_and_stream(task, "copywriting", ctx))
+    summary = req.campaign_description or "Copy de landing page"
+    return _sse_stream_and_save(
+        orchestrate_and_stream(task, "copywriting", ctx),
+        req.client_id, ctx["client_name"], "copy", summary
+    )
 
 
 @router.post("/calendar")
@@ -108,7 +127,10 @@ def generate_calendar(req: CalendarRequest):
     )
     if req.pillar_mode == "manual" and req.custom_pillars:
         task += f" Pilares definidos: {req.custom_pillars}."
-    return _sse_stream(orchestrate_and_stream(task, "editorial-calendar-builder", ctx))
+    return _sse_stream_and_save(
+        orchestrate_and_stream(task, "editorial-calendar-builder", ctx),
+        req.client_id, ctx["client_name"], "calendar", req.month
+    )
 
 
 @router.post("/ads")
@@ -130,7 +152,10 @@ def generate_ads(req: AdsRequest):
     )
     if req.audience_override:
         task += f" Público customizado: {req.audience_override}."
-    return _sse_stream(orchestrate_and_stream(task, "social-media-designer", ctx))
+    return _sse_stream_and_save(
+        orchestrate_and_stream(task, "social-media-designer", ctx),
+        req.client_id, ctx["client_name"], "ads", req.offer_description
+    )
 
 
 @router.post("/reel-script")
@@ -143,4 +168,7 @@ def generate_reel_script(req: ScriptRequest):
         f"Plataforma: {req.platform}. "
         "Entregar: Hook (0-3s), Desenvolvimento (3-90s com marcações de cena), CTA (últimos 5s), Legenda com hashtags."
     )
-    return _sse_stream(orchestrate_and_stream(task, "reels-script-architect", ctx))
+    return _sse_stream_and_save(
+        orchestrate_and_stream(task, "reels-script-architect", ctx),
+        req.client_id, ctx["client_name"], "reel-script", req.hook
+    )

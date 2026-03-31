@@ -1,9 +1,32 @@
 'use client'
 
 import Link from 'next/link'
+import { useEffect, useState } from 'react'
 import { Image, CalendarDays, FileText, Palette, Anchor, Video, ArrowRight, Clock } from 'lucide-react'
 import { useStore } from '@/lib/store'
+import { api } from '@/lib/api'
 import { cn } from '@/lib/utils'
+
+interface OutputEntry {
+  id: string
+  client_name: string
+  feature_label: string
+  prompt_summary: string
+  created_at: string
+}
+
+const FEATURE_COLORS: Record<string, string> = {
+  hooks: 'text-yellow-400 bg-yellow-400/10',
+  copy: 'text-green-400 bg-green-400/10',
+  calendar: 'text-blue-400 bg-blue-400/10',
+  ads: 'text-orange-400 bg-orange-400/10',
+  'reel-script': 'text-pink-400 bg-pink-400/10',
+  brand: 'text-purple-400 bg-purple-400/10',
+}
+
+function formatDate(iso: string) {
+  return new Date(iso).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' })
+}
 
 const features = [
   {
@@ -58,6 +81,14 @@ const features = [
 
 export default function DashboardPage() {
   const { activeClient } = useStore()
+  const [recentes, setRecentes] = useState<OutputEntry[]>([])
+
+  useEffect(() => {
+    const params = activeClient ? { client_id: activeClient.id, limit: 5 } : { limit: 5 }
+    api.listOutputs(params)
+      .then((res) => setRecentes(res.outputs ?? []))
+      .catch(() => setRecentes([]))
+  }, [activeClient])
 
   return (
     <div className="max-w-4xl mx-auto space-y-8">
@@ -98,14 +129,43 @@ export default function DashboardPage() {
       </div>
 
       <div>
-        <div className="flex items-center gap-2 mb-3">
-          <Clock className="w-4 h-4 text-muted-foreground" />
-          <h2 className="text-sm font-medium text-muted-foreground">Recentes</h2>
+        <div className="flex items-center justify-between mb-3">
+          <div className="flex items-center gap-2">
+            <Clock className="w-4 h-4 text-muted-foreground" />
+            <h2 className="text-sm font-medium text-muted-foreground">Recentes</h2>
+          </div>
+          {recentes.length > 0 && (
+            <Link href="/outputs" className="text-xs text-muted-foreground hover:text-foreground transition-colors">
+              Ver todos →
+            </Link>
+          )}
         </div>
         <div className="rounded-xl border border-border/60 bg-card overflow-hidden">
-          <div className="px-4 py-8 text-center text-sm text-muted-foreground">
-            Nenhum entregável gerado ainda. Comece escolhendo uma feature acima.
-          </div>
+          {recentes.length === 0 ? (
+            <div className="px-4 py-8 text-center text-sm text-muted-foreground">
+              Nenhum entregável gerado ainda. Comece escolhendo uma feature acima.
+            </div>
+          ) : (
+            <div className="divide-y divide-border/60">
+              {recentes.map((entry) => {
+                const colorClass = FEATURE_COLORS[entry.feature_label] ?? 'text-muted-foreground bg-muted'
+                return (
+                  <Link
+                    key={entry.id}
+                    href="/outputs"
+                    className="flex items-center gap-3 px-4 py-3 hover:bg-muted/40 transition-colors"
+                  >
+                    <span className={cn('text-xs font-medium px-2 py-0.5 rounded-md shrink-0', colorClass)}>
+                      {entry.feature_label}
+                    </span>
+                    <span className="text-sm truncate flex-1 text-foreground">{entry.prompt_summary}</span>
+                    <span className="text-xs text-muted-foreground shrink-0">{entry.client_name}</span>
+                    <span className="text-xs text-muted-foreground shrink-0">{formatDate(entry.created_at)}</span>
+                  </Link>
+                )
+              })}
+            </div>
+          )}
         </div>
       </div>
     </div>

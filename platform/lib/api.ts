@@ -30,6 +30,17 @@ export const api = {
     return res.json()
   },
 
+  // Outputs
+  listOutputs: (params?: { client_id?: string; limit?: number }) => {
+    if (params?.client_id) {
+      const q = params.limit ? `?limit=${params.limit}` : ''
+      return fetchAPI(`/outputs/client/${params.client_id}${q}`)
+    }
+    const q = params?.limit ? `?limit=${params.limit}` : ''
+    return fetchAPI(`/outputs${q}`)
+  },
+  getOutput: (id: string) => fetchAPI(`/outputs/${id}`),
+
   // SSE streaming helper com suporte a eventos de fase do orquestrador
   streamGenerate: (
     endpoint: string,
