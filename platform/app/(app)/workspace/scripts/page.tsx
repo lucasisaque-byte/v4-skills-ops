@@ -1,24 +1,16 @@
 'use client'
 
 import { useState } from 'react'
-import { useStore } from '@/lib/store'
 import { api } from '@/lib/api'
-import { ClientRequired } from '@/components/ClientRequired'
+import { ClientPicker } from '@/components/ClientPicker'
 import { StreamOutput } from '@/components/StreamOutput'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Video, Download } from 'lucide-react'
+import type { Client } from '@/lib/store'
 
 export default function ScriptsPage() {
-  return (
-    <ClientRequired>
-      <ScriptsFeature />
-    </ClientRequired>
-  )
-}
-
-function ScriptsFeature() {
-  const { activeClient } = useStore()
+  const [client, setClient] = useState<Client | null>(null)
   const [hook, setHook] = useState('')
   const [theme, setTheme] = useState('')
   const [platform, setPlatform] = useState('Instagram Reels')
@@ -26,13 +18,13 @@ function ScriptsFeature() {
   const [isStreaming, setIsStreaming] = useState(false)
 
   const generate = () => {
-    if (!activeClient || !hook.trim() || !theme.trim()) return
+    if (!client || !hook.trim() || !theme.trim()) return
     setOutput('')
     setIsStreaming(true)
 
     api.streamGenerate(
       '/generate/reel-script',
-      { client_id: activeClient.id, hook, theme, platform },
+      { client_id: client.id, hook, theme, platform },
       (chunk) => setOutput((prev) => prev + chunk),
       () => setIsStreaming(false),
       (e) => { setIsStreaming(false); setOutput(`Erro: ${e.message}`) }
@@ -44,7 +36,7 @@ function ScriptsFeature() {
     const url = URL.createObjectURL(blob)
     const a = document.createElement('a')
     a.href = url
-    a.download = `roteiro-${activeClient?.id}-${Date.now()}.txt`
+    a.download = `roteiro-${client?.id}-${Date.now()}.txt`
     a.click()
     URL.revokeObjectURL(url)
   }
@@ -55,15 +47,12 @@ function ScriptsFeature() {
         <div className="w-8 h-8 rounded-lg bg-pink-400/10 flex items-center justify-center">
           <Video className="w-4 h-4 text-pink-400" />
         </div>
-        <div>
-          <h1 className="text-lg font-semibold">Script de Reels</h1>
-          <p className="text-xs text-muted-foreground">
-            Para <span className="text-foreground font-medium">{activeClient?.name}</span>
-          </p>
-        </div>
+        <h1 className="text-lg font-semibold">Script de Reels</h1>
       </div>
 
       <div className="p-4 rounded-xl border border-border/60 bg-card space-y-4">
+        <ClientPicker value={client} onChange={setClient} />
+
         <div className="space-y-1.5">
           <label className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Hook do vídeo</label>
           <textarea
@@ -105,11 +94,7 @@ function ScriptsFeature() {
           </div>
         </div>
 
-        <Button
-          onClick={generate}
-          disabled={isStreaming || !hook.trim() || !theme.trim()}
-          className="w-full"
-        >
+        <Button onClick={generate} disabled={!client || isStreaming || !hook.trim() || !theme.trim()} className="w-full">
           {isStreaming ? 'Gerando roteiro...' : 'Gerar Roteiro'}
         </Button>
       </div>
@@ -127,11 +112,7 @@ function ScriptsFeature() {
               </Button>
             )}
           </div>
-          <StreamOutput
-            content={output}
-            isStreaming={isStreaming}
-            className="min-h-[400px] max-h-[600px]"
-          />
+          <StreamOutput content={output} isStreaming={isStreaming} className="min-h-[400px] max-h-[600px]" />
         </div>
       )}
     </div>

@@ -1,13 +1,13 @@
 'use client'
 
 import { useState } from 'react'
-import { useStore } from '@/lib/store'
 import { api } from '@/lib/api'
-import { ClientRequired } from '@/components/ClientRequired'
+import { ClientPicker } from '@/components/ClientPicker'
 import { StreamOutput } from '@/components/StreamOutput'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { CalendarDays, Download } from 'lucide-react'
+import type { Client } from '@/lib/store'
 
 const months = [
   'Janeiro 2026', 'Fevereiro 2026', 'Março 2026', 'Abril 2026',
@@ -19,15 +19,7 @@ const frequencies = ['3x/semana', '5x/semana', 'Diário']
 const allPlatforms = ['Instagram', 'LinkedIn', 'TikTok']
 
 export default function SocialPage() {
-  return (
-    <ClientRequired>
-      <SocialFeature />
-    </ClientRequired>
-  )
-}
-
-function SocialFeature() {
-  const { activeClient } = useStore()
+  const [client, setClient] = useState<Client | null>(null)
   const currentMonthIndex = new Date().getMonth()
   const [month, setMonth] = useState(months[currentMonthIndex] || months[3])
   const [frequency, setFrequency] = useState('3x/semana')
@@ -45,14 +37,14 @@ function SocialFeature() {
   }
 
   const generate = () => {
-    if (!activeClient || platforms.length === 0) return
+    if (!client || platforms.length === 0) return
     setOutput('')
     setIsStreaming(true)
 
     api.streamGenerate(
       '/generate/calendar',
       {
-        client_id: activeClient.id,
+        client_id: client.id,
         month,
         frequency,
         platforms,
@@ -71,7 +63,7 @@ function SocialFeature() {
     const url = URL.createObjectURL(blob)
     const a = document.createElement('a')
     a.href = url
-    a.download = `calendario-${activeClient?.id}-${month.replace(' ', '-')}.md`
+    a.download = `calendario-${client?.id}-${month.replace(' ', '-')}.md`
     a.click()
     URL.revokeObjectURL(url)
   }
@@ -82,15 +74,12 @@ function SocialFeature() {
         <div className="w-8 h-8 rounded-lg bg-blue-400/10 flex items-center justify-center">
           <CalendarDays className="w-4 h-4 text-blue-400" />
         </div>
-        <div>
-          <h1 className="text-lg font-semibold">Calendário Editorial</h1>
-          <p className="text-xs text-muted-foreground">
-            Para <span className="text-foreground font-medium">{activeClient?.name}</span>
-          </p>
-        </div>
+        <h1 className="text-lg font-semibold">Calendário Editorial</h1>
       </div>
 
       <div className="p-4 rounded-xl border border-border/60 bg-card space-y-4">
+        <ClientPicker value={client} onChange={setClient} />
+
         <div className="grid grid-cols-2 gap-4">
           <div className="space-y-1.5">
             <label className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Mês</label>
@@ -184,7 +173,7 @@ function SocialFeature() {
           )}
         </div>
 
-        <Button onClick={generate} disabled={isStreaming || platforms.length === 0} className="w-full">
+        <Button onClick={generate} disabled={!client || isStreaming || platforms.length === 0} className="w-full">
           {isStreaming ? 'Gerando calendário...' : 'Gerar Calendário'}
         </Button>
       </div>
@@ -202,11 +191,7 @@ function SocialFeature() {
               </Button>
             )}
           </div>
-          <StreamOutput
-            content={output}
-            isStreaming={isStreaming}
-            className="min-h-[400px] max-h-[600px]"
-          />
+          <StreamOutput content={output} isStreaming={isStreaming} className="min-h-[400px] max-h-[600px]" />
         </div>
       )}
     </div>

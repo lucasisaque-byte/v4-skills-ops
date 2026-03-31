@@ -1,13 +1,13 @@
 'use client'
 
 import { useState } from 'react'
-import { useStore } from '@/lib/store'
 import { api } from '@/lib/api'
-import { ClientRequired } from '@/components/ClientRequired'
+import { ClientPicker } from '@/components/ClientPicker'
 import { StreamOutput } from '@/components/StreamOutput'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { FileText, Copy, Check, Download } from 'lucide-react'
+import type { Client } from '@/lib/store'
 
 const outputFormats = [
   { value: 'structured', label: 'Documento de copy' },
@@ -15,15 +15,7 @@ const outputFormats = [
 ]
 
 export default function CopyPage() {
-  return (
-    <ClientRequired>
-      <CopyFeature />
-    </ClientRequired>
-  )
-}
-
-function CopyFeature() {
-  const { activeClient } = useStore()
+  const [client, setClient] = useState<Client | null>(null)
   const [campaign, setCampaign] = useState('')
   const [persona, setPersona] = useState('Todas')
   const [format, setFormat] = useState('structured')
@@ -32,14 +24,14 @@ function CopyFeature() {
   const [copied, setCopied] = useState(false)
 
   const generate = () => {
-    if (!activeClient) return
+    if (!client) return
     setOutput('')
     setIsStreaming(true)
 
     api.streamGenerate(
       '/generate/copy',
       {
-        client_id: activeClient.id,
+        client_id: client.id,
         campaign_description: campaign || undefined,
         persona_focus: persona === 'Todas' ? undefined : persona,
         output_format: format,
@@ -55,7 +47,7 @@ function CopyFeature() {
     const url = URL.createObjectURL(blob)
     const a = document.createElement('a')
     a.href = url
-    a.download = `copy-${activeClient?.id}-${Date.now()}.md`
+    a.download = `copy-${client?.id}-${Date.now()}.md`
     a.click()
     URL.revokeObjectURL(url)
   }
@@ -66,15 +58,12 @@ function CopyFeature() {
         <div className="w-8 h-8 rounded-lg bg-green-400/10 flex items-center justify-center">
           <FileText className="w-4 h-4 text-green-400" />
         </div>
-        <div>
-          <h1 className="text-lg font-semibold">Copy de Landing Page</h1>
-          <p className="text-xs text-muted-foreground">
-            Baseado no DCC + UCM de <span className="text-foreground font-medium">{activeClient?.name}</span>
-          </p>
-        </div>
+        <h1 className="text-lg font-semibold">Copy de Landing Page</h1>
       </div>
 
       <div className="p-4 rounded-xl border border-border/60 bg-card space-y-4">
+        <ClientPicker value={client} onChange={setClient} />
+
         <div className="space-y-1.5">
           <label className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
             Campanha específica <span className="normal-case font-normal">(opcional)</span>
@@ -126,7 +115,7 @@ function CopyFeature() {
           </div>
         </div>
 
-        <Button onClick={generate} disabled={isStreaming} className="w-full">
+        <Button onClick={generate} disabled={!client || isStreaming} className="w-full">
           {isStreaming ? 'Gerando copy...' : 'Gerar Copy'}
         </Button>
       </div>
@@ -154,11 +143,7 @@ function CopyFeature() {
               </div>
             )}
           </div>
-          <StreamOutput
-            content={output}
-            isStreaming={isStreaming}
-            className="min-h-[400px] max-h-[600px]"
-          />
+          <StreamOutput content={output} isStreaming={isStreaming} className="min-h-[400px] max-h-[600px]" />
         </div>
       )}
     </div>

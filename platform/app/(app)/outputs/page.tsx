@@ -3,7 +3,6 @@
 import { useEffect, useState } from 'react'
 import { FolderOpen, ExternalLink } from 'lucide-react'
 import { api } from '@/lib/api'
-import { useStore } from '@/lib/store'
 import { cn } from '@/lib/utils'
 
 interface OutputEntry {
@@ -31,7 +30,6 @@ function formatDate(iso: string) {
 }
 
 export default function OutputsPage() {
-  const { activeClient } = useStore()
   const [outputs, setOutputs] = useState<OutputEntry[]>([])
   const [loading, setLoading] = useState(true)
   const [selected, setSelected] = useState<string | null>(null)
@@ -40,8 +38,7 @@ export default function OutputsPage() {
 
   useEffect(() => {
     setLoading(true)
-    const params = activeClient ? { client_id: activeClient.id, limit: 30 } : { limit: 30 }
-    api.listOutputs(params)
+    api.listOutputs({ limit: 50 })
       .then((res) => setOutputs(res.outputs ?? []))
       .catch(() => setOutputs([]))
       .finally(() => setLoading(false))
@@ -66,9 +63,7 @@ export default function OutputsPage() {
     <div className="max-w-4xl mx-auto space-y-6">
       <div>
         <h1 className="text-xl font-semibold">Entregáveis</h1>
-        <p className="text-sm text-muted-foreground mt-0.5">
-          {activeClient ? `Histórico de ${activeClient.name}` : 'Histórico de todos os clientes'} — últimos 30 por cliente
-        </p>
+        <p className="text-sm text-muted-foreground mt-0.5">Histórico de todos os clientes</p>
       </div>
 
       <div className="rounded-xl border border-border/60 bg-card overflow-hidden">

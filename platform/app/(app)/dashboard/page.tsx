@@ -3,13 +3,13 @@
 import Link from 'next/link'
 import { useEffect, useState } from 'react'
 import { Image, CalendarDays, FileText, Palette, Anchor, Video, ArrowRight, Clock } from 'lucide-react'
-import { useStore } from '@/lib/store'
 import { api } from '@/lib/api'
 import { cn } from '@/lib/utils'
 
 interface OutputEntry {
   id: string
   client_name: string
+  feature: string
   feature_label: string
   prompt_summary: string
   created_at: string
@@ -80,26 +80,20 @@ const features = [
 ]
 
 export default function DashboardPage() {
-  const { activeClient } = useStore()
   const [recentes, setRecentes] = useState<OutputEntry[]>([])
 
   useEffect(() => {
-    const params = activeClient ? { client_id: activeClient.id, limit: 5 } : { limit: 5 }
-    api.listOutputs(params)
+    api.listOutputs({ limit: 5 })
       .then((res) => setRecentes(res.outputs ?? []))
       .catch(() => setRecentes([]))
-  }, [activeClient])
+  }, [])
 
   return (
     <div className="max-w-4xl mx-auto space-y-8">
       <div>
-        <h1 className="text-xl font-semibold text-foreground">
-          {activeClient ? `O que vamos produzir para ${activeClient.name}?` : 'O que vamos produzir hoje?'}
-        </h1>
+        <h1 className="text-xl font-semibold text-foreground">O que vamos produzir hoje?</h1>
         <p className="text-sm text-muted-foreground mt-1">
-          {activeClient
-            ? 'Selecione uma feature — o contexto do cliente já está carregado.'
-            : 'Selecione um cliente no topo para carregar o contexto automático.'}
+          Selecione uma feature — o cliente é escolhido dentro de cada uma.
         </p>
       </div>
 
@@ -148,7 +142,7 @@ export default function DashboardPage() {
           ) : (
             <div className="divide-y divide-border/60">
               {recentes.map((entry) => {
-                const colorClass = FEATURE_COLORS[entry.feature_label] ?? 'text-muted-foreground bg-muted'
+                const colorClass = FEATURE_COLORS[entry.feature] ?? 'text-muted-foreground bg-muted'
                 return (
                   <Link
                     key={entry.id}
