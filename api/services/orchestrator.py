@@ -89,9 +89,10 @@ def orchestrate_and_stream(
 
         yield f"__AM_DONE__{json.dumps({'skill': skill_alvo, 'observacoes': observacoes}, ensure_ascii=False)}"
 
-        # Fase 2: Skill especializada gera o output com o briefing enriquecido
+        # Fase 2: Skill especializada usa apenas o briefing do AM (sem re-injetar contexto cru)
+        # O AM já destilou tudo que é relevante no briefing — evita duplicar tokens
         yield "__SKILL_START__"
-        for chunk in stream_skill(skill_alvo, briefing, client_context):
+        for chunk in stream_skill(skill_alvo, briefing, None):
             yield chunk
 
     except Exception as e:
