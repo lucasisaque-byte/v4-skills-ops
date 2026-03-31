@@ -1,0 +1,19 @@
+{
+  "template_id": "copy-lp-v1",
+  "version": "1.0.0",
+  "task_type": "copy_lp",
+  "display_name": "Copy de Landing Page",
+  "steps": [
+    {
+      "id": "copy_lp",
+      "title": "Copy completa da landing page",
+      "primary_skill": "copywriting",
+      "support_skills": [],
+      "input_artifacts": [],
+      "output_artifacts": ["landing-page-copy.md"],
+      "approval_gate": { "required": false, "type": "copy" },
+      "rebrief_policy": { "allowed": true, "mode": "rerun_step" }
+    }
+  ],
+  "fallbacks": []
+}

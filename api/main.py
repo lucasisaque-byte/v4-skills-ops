@@ -6,6 +6,7 @@ import uvicorn
 from api.routes.clients import router as clients_router
 from api.routes.generate import router as generate_router
 from api.routes.outputs import router as outputs_router
+from api.routes.workflow_runs import router as workflow_runs_router
 
 app = FastAPI(
     title="V4 Skills Platform API",
@@ -53,6 +54,7 @@ app.add_middleware(
 app.include_router(clients_router)
 app.include_router(generate_router)
 app.include_router(outputs_router)
+app.include_router(workflow_runs_router)
 
 
 @app.get("/")

@@ -1,0 +1,52 @@
+{
+  "template_id": "landing-page-v1",
+  "version": "1.0.0",
+  "task_type": "landing_page",
+  "display_name": "Landing Page Completa",
+  "steps": [
+    {
+      "id": "am_briefing",
+      "title": "Briefing estratégico",
+      "primary_skill": "account-manager",
+      "support_skills": [],
+      "input_artifacts": [],
+      "output_artifacts": ["briefing.md"],
+      "approval_gate": { "required": true, "type": "briefing" },
+      "rebrief_policy": { "allowed": true, "mode": "rerun_step" }
+    },
+    {
+      "id": "copy_lp",
+      "title": "Copy da landing page",
+      "primary_skill": "copywriting",
+      "support_skills": [],
+      "input_artifacts": ["briefing.md"],
+      "output_artifacts": ["landing-page-copy.md"],
+      "approval_gate": { "required": true, "type": "copy" },
+      "rebrief_policy": {
+        "allowed": true,
+        "mode": "restart_from_step",
+        "target_step_id": "am_briefing"
+      }
+    },
+    {
+      "id": "design_lp",
+      "title": "Layout / estrutura visual",
+      "primary_skill": "social-media-designer",
+      "support_skills": ["brand-system-builder"],
+      "input_artifacts": ["landing-page-copy.md"],
+      "output_artifacts": ["landing-page-design.html"],
+      "approval_gate": { "required": true, "type": "design" },
+      "rebrief_policy": {
+        "allowed": true,
+        "mode": "restart_from_step",
+        "target_step_id": "copy_lp"
+      }
+    }
+  ],
+  "fallbacks": [
+    {
+      "when": "missing_brand_context",
+      "action": "continue_with_copy_only_and_flag_design_risk"
+    }
+  ]
+}

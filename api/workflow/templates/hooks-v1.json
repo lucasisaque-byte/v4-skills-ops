@@ -1,0 +1,19 @@
+{
+  "template_id": "hooks-v1",
+  "version": "1.0.0",
+  "task_type": "hooks",
+  "display_name": "Hook Engineer",
+  "steps": [
+    {
+      "id": "hook_generation",
+      "title": "Geração de 5 hooks",
+      "primary_skill": "hook-engineer",
+      "support_skills": [],
+      "input_artifacts": [],
+      "output_artifacts": ["hooks.md"],
+      "approval_gate": { "required": false, "type": "output" },
+      "rebrief_policy": { "allowed": true, "mode": "rerun_step" }
+    }
+  ],
+  "fallbacks": []
+}

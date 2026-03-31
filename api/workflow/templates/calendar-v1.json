@@ -1,0 +1,19 @@
+{
+  "template_id": "calendar-v1",
+  "version": "1.0.0",
+  "task_type": "calendar",
+  "display_name": "Calendário Editorial",
+  "steps": [
+    {
+      "id": "calendar_generation",
+      "title": "Calendário editorial mensal",
+      "primary_skill": "editorial-calendar-builder",
+      "support_skills": [],
+      "input_artifacts": [],
+      "output_artifacts": ["calendario.md"],
+      "approval_gate": { "required": false, "type": "output" },
+      "rebrief_policy": { "allowed": true, "mode": "rerun_step" }
+    }
+  ],
+  "fallbacks": []
+}

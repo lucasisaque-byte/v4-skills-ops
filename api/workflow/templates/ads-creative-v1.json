@@ -1,0 +1,19 @@
+{
+  "template_id": "ads-creative-v1",
+  "version": "1.0.0",
+  "task_type": "ads",
+  "display_name": "Criativo de Ads",
+  "steps": [
+    {
+      "id": "ads_generation",
+      "title": "Criativo de anúncio",
+      "primary_skill": "social-media-designer",
+      "support_skills": [],
+      "input_artifacts": [],
+      "output_artifacts": ["ads-creative.md"],
+      "approval_gate": { "required": false, "type": "output" },
+      "rebrief_policy": { "allowed": true, "mode": "rerun_step" }
+    }
+  ],
+  "fallbacks": []
+}

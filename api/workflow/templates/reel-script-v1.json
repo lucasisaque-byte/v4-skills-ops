@@ -1,0 +1,19 @@
+{
+  "template_id": "reel-script-v1",
+  "version": "1.0.0",
+  "task_type": "reel_script",
+  "display_name": "Script de Reels",
+  "steps": [
+    {
+      "id": "reel_script_generation",
+      "title": "Roteiro de Reel/TikTok",
+      "primary_skill": "reels-script-architect",
+      "support_skills": [],
+      "input_artifacts": [],
+      "output_artifacts": ["roteiro.md"],
+      "approval_gate": { "required": false, "type": "output" },
+      "rebrief_policy": { "allowed": true, "mode": "rerun_step" }
+    }
+  ],
+  "fallbacks": []
+}
