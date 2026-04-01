@@ -1,12 +1,13 @@
 'use client'
 
 import { useState } from 'react'
-import { api } from '@/lib/api'
 import { ClientPicker } from '@/components/ClientPicker'
 import { StreamOutput } from '@/components/StreamOutput'
+import { WorkflowStatusBar } from '@/components/WorkflowStatusBar'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
-import { FileText, Copy, Check, Download } from 'lucide-react'
+import { FileText, Copy, Check, Download, Loader2 } from 'lucide-react'
+import { useWorkflowRun } from '@/lib/useWorkflowRun'
 import type { Client } from '@/lib/store'
 
 const outputFormats = [
@@ -19,27 +20,19 @@ export default function CopyPage() {
   const [campaign, setCampaign] = useState('')
   const [persona, setPersona] = useState('Todas')
   const [format, setFormat] = useState('structured')
-  const [output, setOutput] = useState('')
-  const [isStreaming, setIsStreaming] = useState(false)
   const [copied, setCopied] = useState(false)
+  const { phase, meta, output, error, generate, reset } = useWorkflowRun()
 
-  const generate = () => {
+  const isStreaming = phase === 'planning' || phase === 'streaming'
+  const phaseLabel = phase === 'planning' ? 'Account Manager preparando briefing...' : 'Gerando copy...'
+
+  const handleGenerate = () => {
     if (!client) return
-    setOutput('')
-    setIsStreaming(true)
-
-    api.streamGenerate(
-      '/generate/copy',
-      {
-        client_id: client.id,
-        campaign_description: campaign || undefined,
-        persona_focus: persona === 'Todas' ? undefined : persona,
-        output_format: format,
-      },
-      (chunk) => setOutput((prev) => prev + chunk),
-      () => setIsStreaming(false),
-      (e) => { setIsStreaming(false); setOutput(`Erro: ${e.message}`) }
-    )
+    generate('copy_lp', client.id, {
+      campaign_description: campaign || undefined,
+      persona_focus: persona === 'Todas' ? undefined : persona,
+      output_format: format,
+    })
   }
 
   const download = () => {
@@ -62,7 +55,7 @@ export default function CopyPage() {
       </div>
 
       <div className="p-4 rounded-xl border border-border/60 bg-card space-y-4">
-        <ClientPicker value={client} onChange={setClient} />
+        <ClientPicker value={client} onChange={(c) => { setClient(c); reset() }} />
 
         <div className="space-y-1.5">
           <label className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
@@ -81,15 +74,10 @@ export default function CopyPage() {
           <label className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Persona foco</label>
           <div className="flex gap-2 flex-wrap">
             {['Todas', 'Principal', 'Secundária'].map((p) => (
-              <button
-                key={p}
-                onClick={() => setPersona(p)}
-                className={`px-3 py-1.5 text-sm rounded-lg border transition-colors ${
-                  persona === p
-                    ? 'border-primary/60 bg-primary/10 text-foreground'
-                    : 'border-border/60 text-muted-foreground hover:text-foreground'
-                }`}
-              >
+              <button key={p} onClick={() => setPersona(p)}
+                className={`px-3 py-1.5 text-sm rounded-lg border transition-colors ${persona === p
+                  ? 'border-primary/60 bg-primary/10 text-foreground'
+                  : 'border-border/60 text-muted-foreground hover:text-foreground'}`}>
                 {p}
               </button>
             ))}
@@ -100,38 +88,35 @@ export default function CopyPage() {
           <label className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Formato de saída</label>
           <div className="flex gap-2">
             {outputFormats.map((f) => (
-              <button
-                key={f.value}
-                onClick={() => setFormat(f.value)}
-                className={`px-3 py-1.5 text-sm rounded-lg border transition-colors ${
-                  format === f.value
-                    ? 'border-primary/60 bg-primary/10 text-foreground'
-                    : 'border-border/60 text-muted-foreground hover:text-foreground'
-                }`}
-              >
+              <button key={f.value} onClick={() => setFormat(f.value)}
+                className={`px-3 py-1.5 text-sm rounded-lg border transition-colors ${format === f.value
+                  ? 'border-primary/60 bg-primary/10 text-foreground'
+                  : 'border-border/60 text-muted-foreground hover:text-foreground'}`}>
                 {f.label}
               </button>
             ))}
           </div>
         </div>
 
-        <Button onClick={generate} disabled={!client || isStreaming} className="w-full">
-          {isStreaming ? 'Gerando copy...' : 'Gerar Copy'}
+        <Button onClick={handleGenerate} disabled={!client || isStreaming} className="w-full">
+          {isStreaming ? <><Loader2 className="w-3.5 h-3.5 mr-2 animate-spin" />{phaseLabel}</> : 'Gerar Copy'}
         </Button>
       </div>
+
+      {meta && <WorkflowStatusBar meta={meta} phase={phase} />}
+      {error && <p className="text-sm text-red-400 px-1">Erro: {error}</p>}
 
       {(output || isStreaming) && (
         <div className="space-y-2">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               <span className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Copy gerada</span>
-              {isStreaming && <Badge variant="secondary" className="text-xs animate-pulse">gerando...</Badge>}
+              {isStreaming && <Badge variant="secondary" className="text-xs animate-pulse">{phaseLabel}</Badge>}
             </div>
-            {output && !isStreaming && (
+            {output && phase === 'done' && (
               <div className="flex gap-2">
                 <Button size="sm" variant="ghost" className="h-7 gap-1.5 text-xs" onClick={() => {
-                  navigator.clipboard.writeText(output)
-                  setCopied(true)
+                  navigator.clipboard.writeText(output); setCopied(true)
                   setTimeout(() => setCopied(false), 2000)
                 }}>
                   {copied ? <Check className="w-3 h-3 text-green-400" /> : <Copy className="w-3 h-3" />}

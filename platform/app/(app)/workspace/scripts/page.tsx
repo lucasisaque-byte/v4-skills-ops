@@ -1,12 +1,13 @@
 'use client'
 
 import { useState } from 'react'
-import { api } from '@/lib/api'
 import { ClientPicker } from '@/components/ClientPicker'
 import { StreamOutput } from '@/components/StreamOutput'
+import { WorkflowStatusBar } from '@/components/WorkflowStatusBar'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
-import { Video, Download } from 'lucide-react'
+import { Video, Download, Loader2 } from 'lucide-react'
+import { useWorkflowRun } from '@/lib/useWorkflowRun'
 import type { Client } from '@/lib/store'
 
 export default function ScriptsPage() {
@@ -14,21 +15,14 @@ export default function ScriptsPage() {
   const [hook, setHook] = useState('')
   const [theme, setTheme] = useState('')
   const [platform, setPlatform] = useState('Instagram Reels')
-  const [output, setOutput] = useState('')
-  const [isStreaming, setIsStreaming] = useState(false)
+  const { phase, meta, output, error, generate, reset } = useWorkflowRun()
 
-  const generate = () => {
+  const isStreaming = phase === 'planning' || phase === 'streaming'
+  const phaseLabel = phase === 'planning' ? 'Account Manager preparando briefing...' : 'Gerando roteiro...'
+
+  const handleGenerate = () => {
     if (!client || !hook.trim() || !theme.trim()) return
-    setOutput('')
-    setIsStreaming(true)
-
-    api.streamGenerate(
-      '/generate/reel-script',
-      { client_id: client.id, hook, theme, platform },
-      (chunk) => setOutput((prev) => prev + chunk),
-      () => setIsStreaming(false),
-      (e) => { setIsStreaming(false); setOutput(`Erro: ${e.message}`) }
-    )
+    generate('reel_script', client.id, { hook, theme, platform })
   }
 
   const download = () => {
@@ -51,7 +45,7 @@ export default function ScriptsPage() {
       </div>
 
       <div className="p-4 rounded-xl border border-border/60 bg-card space-y-4">
-        <ClientPicker value={client} onChange={setClient} />
+        <ClientPicker value={client} onChange={(c) => { setClient(c); reset() }} />
 
         <div className="space-y-1.5">
           <label className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Hook do vídeo</label>
@@ -94,19 +88,22 @@ export default function ScriptsPage() {
           </div>
         </div>
 
-        <Button onClick={generate} disabled={!client || isStreaming || !hook.trim() || !theme.trim()} className="w-full">
-          {isStreaming ? 'Gerando roteiro...' : 'Gerar Roteiro'}
+        <Button onClick={handleGenerate} disabled={!client || isStreaming || !hook.trim() || !theme.trim()} className="w-full">
+          {isStreaming ? <><Loader2 className="w-3.5 h-3.5 mr-2 animate-spin" />{phaseLabel}</> : 'Gerar Roteiro'}
         </Button>
       </div>
+
+      {meta && <WorkflowStatusBar meta={meta} phase={phase} />}
+      {error && <p className="text-sm text-red-400 px-1">Erro: {error}</p>}
 
       {(output || isStreaming) && (
         <div className="space-y-2">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               <span className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Roteiro</span>
-              {isStreaming && <Badge variant="secondary" className="text-xs animate-pulse">gerando...</Badge>}
+              {isStreaming && <Badge variant="secondary" className="text-xs animate-pulse">{phaseLabel}</Badge>}
             </div>
-            {output && !isStreaming && (
+            {output && phase === 'done' && (
               <Button size="sm" variant="ghost" className="h-7 gap-1.5 text-xs" onClick={download}>
                 <Download className="w-3 h-3" /> Baixar .txt
               </Button>

@@ -1,53 +1,31 @@
 'use client'
 
 import { useState } from 'react'
-import { api } from '@/lib/api'
 import { ClientPicker } from '@/components/ClientPicker'
 import { StreamOutput } from '@/components/StreamOutput'
+import { WorkflowStatusBar } from '@/components/WorkflowStatusBar'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
-import { Anchor, Copy, Check, Loader2, Zap } from 'lucide-react'
+import { Anchor, Copy, Check, Loader2 } from 'lucide-react'
+import { useWorkflowRun } from '@/lib/useWorkflowRun'
 import type { Client } from '@/lib/store'
 
 const platforms = ['Instagram', 'LinkedIn', 'TikTok/Reels']
-
-type Phase = 'idle' | 'briefing' | 'generating' | 'done'
 
 export default function HooksPage() {
   const [client, setClient] = useState<Client | null>(null)
   const [theme, setTheme] = useState('')
   const [platform, setPlatform] = useState('Instagram')
-  const [output, setOutput] = useState('')
-  const [phase, setPhase] = useState<Phase>('idle')
-  const [amMeta, setAmMeta] = useState<{ skill?: string; observacoes?: string } | null>(null)
   const [copied, setCopied] = useState(false)
+  const { phase, meta, output, error, generate, reset } = useWorkflowRun()
 
-  const phaseLabel: Record<Phase, string> = {
-    idle: '',
-    briefing: 'Account Manager montando briefing...',
-    generating: 'Gerando hooks...',
-    done: '',
-  }
+  const isStreaming = phase === 'planning' || phase === 'streaming'
+  const phaseLabel = phase === 'planning' ? 'Account Manager preparando briefing...' : 'Gerando hooks...'
 
-  const generate = () => {
+  const handleGenerate = () => {
     if (!theme.trim() || !client) return
-    setOutput('')
-    setAmMeta(null)
-    setPhase('briefing')
-
-    api.streamGenerate(
-      '/generate/hooks',
-      { client_id: client.id, theme, platform },
-      (chunk) => setOutput((prev) => prev + chunk),
-      () => setPhase('done'),
-      (e) => { setPhase('idle'); setOutput(`Erro: ${e.message}`) },
-      (ev, meta) => {
-        if (ev === 'am_done') { setAmMeta(meta as any); setPhase('generating') }
-      },
-    )
+    generate('hooks', client.id, { theme, platform })
   }
-
-  const isStreaming = phase === 'briefing' || phase === 'generating'
 
   return (
     <div className="max-w-2xl mx-auto space-y-6">
@@ -59,7 +37,7 @@ export default function HooksPage() {
       </div>
 
       <div className="p-4 rounded-xl border border-border/60 bg-card space-y-4">
-        <ClientPicker value={client} onChange={setClient} />
+        <ClientPicker value={client} onChange={(c) => { setClient(c); reset() }} />
 
         <div className="space-y-1.5">
           <label className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Tema do post</label>
@@ -76,37 +54,27 @@ export default function HooksPage() {
           <label className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Plataforma</label>
           <div className="flex gap-2">
             {platforms.map((p) => (
-              <button
-                key={p}
-                onClick={() => setPlatform(p)}
-                className={`px-3 py-1.5 text-sm rounded-lg border transition-colors ${
-                  platform === p
-                    ? 'border-primary/60 bg-primary/10 text-foreground'
-                    : 'border-border/60 text-muted-foreground hover:text-foreground'
-                }`}
-              >
+              <button key={p} onClick={() => setPlatform(p)}
+                className={`px-3 py-1.5 text-sm rounded-lg border transition-colors ${platform === p
+                  ? 'border-primary/60 bg-primary/10 text-foreground'
+                  : 'border-border/60 text-muted-foreground hover:text-foreground'}`}>
                 {p}
               </button>
             ))}
           </div>
         </div>
 
-        <Button onClick={generate} disabled={!theme.trim() || !client || isStreaming} className="w-full">
+        <Button onClick={handleGenerate} disabled={!theme.trim() || !client || isStreaming} className="w-full">
           {isStreaming
-            ? <><Loader2 className="w-3.5 h-3.5 mr-2 animate-spin" />{phaseLabel[phase]}</>
-            : 'Gerar 5 Hooks'
-          }
+            ? <><Loader2 className="w-3.5 h-3.5 mr-2 animate-spin" />{phaseLabel}</>
+            : 'Gerar 5 Hooks'}
         </Button>
       </div>
 
-      {amMeta && (
-        <div className="flex items-start gap-2 px-3 py-2.5 rounded-lg bg-yellow-400/5 border border-yellow-400/20 text-xs text-yellow-300">
-          <Zap className="w-3.5 h-3.5 mt-0.5 shrink-0" />
-          <div>
-            <span className="font-medium">Account Manager</span>
-            {amMeta.observacoes && <span className="text-yellow-300/70"> — {amMeta.observacoes}</span>}
-          </div>
-        </div>
+      {meta && <WorkflowStatusBar meta={meta} phase={phase} />}
+
+      {error && (
+        <p className="text-sm text-red-400 px-1">Erro: {error}</p>
       )}
 
       {(output || isStreaming) && (
@@ -114,7 +82,7 @@ export default function HooksPage() {
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               <span className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Resultado</span>
-              {isStreaming && <Badge variant="secondary" className="text-xs animate-pulse">{phaseLabel[phase]}</Badge>}
+              {isStreaming && <Badge variant="secondary" className="text-xs animate-pulse">{phaseLabel}</Badge>}
             </div>
             {output && phase === 'done' && (
               <Button size="sm" variant="ghost" className="h-7 gap-1.5 text-xs" onClick={() => {
@@ -127,12 +95,8 @@ export default function HooksPage() {
               </Button>
             )}
           </div>
-          <StreamOutput
-            content={output}
-            isStreaming={isStreaming}
-            className="min-h-[300px] max-h-[500px]"
-            placeholder="Os hooks aparecerão aqui..."
-          />
+          <StreamOutput content={output} isStreaming={isStreaming}
+            className="min-h-[300px] max-h-[500px]" placeholder="Os hooks aparecerão aqui..." />
         </div>
       )}
     </div>

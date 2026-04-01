@@ -1,12 +1,13 @@
 'use client'
 
 import { useState } from 'react'
-import { api } from '@/lib/api'
 import { ClientPicker } from '@/components/ClientPicker'
 import { StreamOutput } from '@/components/StreamOutput'
+import { WorkflowStatusBar } from '@/components/WorkflowStatusBar'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
-import { CalendarDays, Download } from 'lucide-react'
+import { CalendarDays, Download, Loader2 } from 'lucide-react'
+import { useWorkflowRun } from '@/lib/useWorkflowRun'
 import type { Client } from '@/lib/store'
 
 const months = [
@@ -14,7 +15,6 @@ const months = [
   'Maio 2026', 'Junho 2026', 'Julho 2026', 'Agosto 2026',
   'Setembro 2026', 'Outubro 2026', 'Novembro 2026', 'Dezembro 2026',
 ]
-
 const frequencies = ['3x/semana', '5x/semana', 'Diário']
 const allPlatforms = ['Instagram', 'LinkedIn', 'TikTok']
 
@@ -27,35 +27,22 @@ export default function SocialPage() {
   const [objective, setObjective] = useState('')
   const [pillarMode, setPillarMode] = useState('auto')
   const [customPillars, setCustomPillars] = useState('')
-  const [output, setOutput] = useState('')
-  const [isStreaming, setIsStreaming] = useState(false)
+  const { phase, meta, output, error, generate, reset } = useWorkflowRun()
 
-  const togglePlatform = (p: string) => {
-    setPlatforms((prev) =>
-      prev.includes(p) ? prev.filter((x) => x !== p) : [...prev, p]
-    )
-  }
+  const isStreaming = phase === 'planning' || phase === 'streaming'
+  const phaseLabel = phase === 'planning' ? 'Account Manager preparando briefing...' : 'Gerando calendário...'
 
-  const generate = () => {
+  const togglePlatform = (p: string) =>
+    setPlatforms((prev) => prev.includes(p) ? prev.filter((x) => x !== p) : [...prev, p])
+
+  const handleGenerate = () => {
     if (!client || platforms.length === 0) return
-    setOutput('')
-    setIsStreaming(true)
-
-    api.streamGenerate(
-      '/generate/calendar',
-      {
-        client_id: client.id,
-        month,
-        frequency,
-        platforms,
-        monthly_objective: objective,
-        pillar_mode: pillarMode,
-        custom_pillars: pillarMode === 'manual' ? customPillars : undefined,
-      },
-      (chunk) => setOutput((prev) => prev + chunk),
-      () => setIsStreaming(false),
-      (e) => { setIsStreaming(false); setOutput(`Erro: ${e.message}`) }
-    )
+    generate('calendar', client.id, {
+      month, frequency, platforms,
+      monthly_objective: objective,
+      pillar_mode: pillarMode,
+      custom_pillars: pillarMode === 'manual' ? customPillars : undefined,
+    })
   }
 
   const download = () => {
@@ -78,16 +65,13 @@ export default function SocialPage() {
       </div>
 
       <div className="p-4 rounded-xl border border-border/60 bg-card space-y-4">
-        <ClientPicker value={client} onChange={setClient} />
+        <ClientPicker value={client} onChange={(c) => { setClient(c); reset() }} />
 
         <div className="grid grid-cols-2 gap-4">
           <div className="space-y-1.5">
             <label className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Mês</label>
-            <select
-              className="w-full bg-background border border-border/60 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-ring"
-              value={month}
-              onChange={(e) => setMonth(e.target.value)}
-            >
+            <select className="w-full bg-background border border-border/60 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-ring"
+              value={month} onChange={(e) => setMonth(e.target.value)}>
               {months.map((m) => <option key={m}>{m}</option>)}
             </select>
           </div>
@@ -95,15 +79,10 @@ export default function SocialPage() {
             <label className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Frequência</label>
             <div className="flex flex-col gap-1">
               {frequencies.map((f) => (
-                <button
-                  key={f}
-                  onClick={() => setFrequency(f)}
-                  className={`px-3 py-1.5 text-sm rounded-lg border text-left transition-colors ${
-                    frequency === f
-                      ? 'border-primary/60 bg-primary/10 text-foreground'
-                      : 'border-border/60 text-muted-foreground hover:text-foreground'
-                  }`}
-                >
+                <button key={f} onClick={() => setFrequency(f)}
+                  className={`px-3 py-1.5 text-sm rounded-lg border text-left transition-colors ${frequency === f
+                    ? 'border-primary/60 bg-primary/10 text-foreground'
+                    : 'border-border/60 text-muted-foreground hover:text-foreground'}`}>
                   {f}
                 </button>
               ))}
@@ -115,15 +94,10 @@ export default function SocialPage() {
           <label className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Plataformas</label>
           <div className="flex gap-2">
             {allPlatforms.map((p) => (
-              <button
-                key={p}
-                onClick={() => togglePlatform(p)}
-                className={`px-3 py-1.5 text-sm rounded-lg border transition-colors ${
-                  platforms.includes(p)
-                    ? 'border-primary/60 bg-primary/10 text-foreground'
-                    : 'border-border/60 text-muted-foreground hover:text-foreground'
-                }`}
-              >
+              <button key={p} onClick={() => togglePlatform(p)}
+                className={`px-3 py-1.5 text-sm rounded-lg border transition-colors ${platforms.includes(p)
+                  ? 'border-primary/60 bg-primary/10 text-foreground'
+                  : 'border-border/60 text-muted-foreground hover:text-foreground'}`}>
                 {p}
               </button>
             ))}
@@ -134,58 +108,46 @@ export default function SocialPage() {
           <label className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
             Objetivo do mês <span className="normal-case font-normal">(opcional)</span>
           </label>
-          <input
-            className="w-full bg-background border border-border/60 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-ring"
+          <input className="w-full bg-background border border-border/60 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-ring"
             placeholder="Ex: Lançamento do produto X, crescimento de seguidores..."
-            value={objective}
-            onChange={(e) => setObjective(e.target.value)}
-          />
+            value={objective} onChange={(e) => setObjective(e.target.value)} />
         </div>
 
         <div className="space-y-1.5">
           <label className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Pilares editoriais</label>
           <div className="flex flex-col gap-1">
-            {[
-              { value: 'auto', label: 'Gerar automaticamente (recomendado)' },
-              { value: 'manual', label: 'Definir manualmente' },
-            ].map((opt) => (
-              <button
-                key={opt.value}
-                onClick={() => setPillarMode(opt.value)}
-                className={`px-3 py-1.5 text-sm rounded-lg border text-left transition-colors ${
-                  pillarMode === opt.value
-                    ? 'border-primary/60 bg-primary/10 text-foreground'
-                    : 'border-border/60 text-muted-foreground hover:text-foreground'
-                }`}
-              >
+            {[{ value: 'auto', label: 'Gerar automaticamente (recomendado)' }, { value: 'manual', label: 'Definir manualmente' }].map((opt) => (
+              <button key={opt.value} onClick={() => setPillarMode(opt.value)}
+                className={`px-3 py-1.5 text-sm rounded-lg border text-left transition-colors ${pillarMode === opt.value
+                  ? 'border-primary/60 bg-primary/10 text-foreground'
+                  : 'border-border/60 text-muted-foreground hover:text-foreground'}`}>
                 {opt.label}
               </button>
             ))}
           </div>
           {pillarMode === 'manual' && (
-            <textarea
-              className="w-full bg-background border border-border/60 rounded-lg px-3 py-2.5 text-sm resize-none focus:outline-none focus:ring-1 focus:ring-ring mt-2"
-              rows={3}
-              placeholder="Ex: 1. Educação, 2. Bastidores, 3. Prova Social, 4. Entretenimento"
-              value={customPillars}
-              onChange={(e) => setCustomPillars(e.target.value)}
-            />
+            <textarea className="w-full bg-background border border-border/60 rounded-lg px-3 py-2.5 text-sm resize-none focus:outline-none focus:ring-1 focus:ring-ring mt-2"
+              rows={3} placeholder="Ex: 1. Educação, 2. Bastidores, 3. Prova Social, 4. Entretenimento"
+              value={customPillars} onChange={(e) => setCustomPillars(e.target.value)} />
           )}
         </div>
 
-        <Button onClick={generate} disabled={!client || isStreaming || platforms.length === 0} className="w-full">
-          {isStreaming ? 'Gerando calendário...' : 'Gerar Calendário'}
+        <Button onClick={handleGenerate} disabled={!client || isStreaming || platforms.length === 0} className="w-full">
+          {isStreaming ? <><Loader2 className="w-3.5 h-3.5 mr-2 animate-spin" />{phaseLabel}</> : 'Gerar Calendário'}
         </Button>
       </div>
+
+      {meta && <WorkflowStatusBar meta={meta} phase={phase} />}
+      {error && <p className="text-sm text-red-400 px-1">Erro: {error}</p>}
 
       {(output || isStreaming) && (
         <div className="space-y-2">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               <span className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Calendário</span>
-              {isStreaming && <Badge variant="secondary" className="text-xs animate-pulse">gerando...</Badge>}
+              {isStreaming && <Badge variant="secondary" className="text-xs animate-pulse">{phaseLabel}</Badge>}
             </div>
-            {output && !isStreaming && (
+            {output && phase === 'done' && (
               <Button size="sm" variant="ghost" className="h-7 gap-1.5 text-xs" onClick={download}>
                 <Download className="w-3 h-3" /> Exportar .md
               </Button>

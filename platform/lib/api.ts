@@ -9,28 +9,61 @@ async function fetchAPI(path: string, options?: RequestInit) {
   return res.json()
 }
 
+function postJSON(path: string, data: object) {
+  return fetchAPI(path, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(data),
+  })
+}
+
+// ─── SSE reader (reusável para GET e POST streams) ────────────────────────────
+
+async function readSSE(
+  res: Response,
+  onChunk: (text: string) => void,
+  onEvent: (event: string, payload: object) => void,
+  onDone: () => void,
+  onError: (e: Error) => void,
+) {
+  const reader = res.body!.getReader()
+  const decoder = new TextDecoder()
+  while (true) {
+    const { done, value } = await reader.read()
+    if (done) break
+    const lines = decoder.decode(value).split('\n')
+    for (const line of lines) {
+      if (!line.startsWith('data: ')) continue
+      const raw = line.slice(6)
+      if (raw === '[DONE]') { onDone(); return }
+      try {
+        const parsed = JSON.parse(raw)
+        if (parsed.text) {
+          onChunk(parsed.text)
+        } else if (parsed.event) {
+          const ev: string = parsed.event
+          if (ev.startsWith('__ERROR__')) {
+            onError(new Error(ev.replace('__ERROR__', '')))
+            onDone()
+            return
+          }
+          onEvent(ev, parsed)
+        }
+      } catch {
+        onChunk(raw)
+      }
+    }
+  }
+  onDone()
+}
+
 export const api = {
-  // Clients
+  // ─── Clients ────────────────────────────────────────────────────────────────
   listClients: () => fetchAPI('/clients'),
   getClient: (id: string) => fetchAPI(`/clients/${id}`),
   getClientContext: (id: string) => fetchAPI(`/clients/${id}/context`),
 
-  // Generation — returns EventSource URL for SSE
-  generateHooks: (data: object) =>
-    `${API_BASE}/generate/hooks?${new URLSearchParams({ payload: JSON.stringify(data) })}`,
-
-  // POST endpoints (non-streaming)
-  postGenerate: async (endpoint: string, data: object) => {
-    const res = await fetch(`${API_BASE}${endpoint}`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(data),
-    })
-    if (!res.ok) throw new Error(await res.text())
-    return res.json()
-  },
-
-  // Outputs
+  // ─── Outputs ────────────────────────────────────────────────────────────────
   listOutputs: (params?: { client_id?: string; limit?: number }) => {
     if (params?.client_id) {
       const q = params.limit ? `?limit=${params.limit}` : ''
@@ -41,7 +74,69 @@ export const api = {
   },
   getOutput: (id: string) => fetchAPI(`/outputs/${id}`),
 
-  // SSE streaming helper com suporte a eventos de fase do orquestrador
+  // ─── Workflow Runs ───────────────────────────────────────────────────────────
+  createWorkflowRun: (data: {
+    client_id: string
+    task_type: string
+    input: object
+  }) => postJSON('/workflow-runs', data),
+
+  getWorkflowRun: (run_id: string) => fetchAPI(`/workflow-runs/${run_id}`),
+
+  listWorkflowTemplates: () => fetchAPI('/workflow-runs/templates'),
+
+  approveStep: (run_id: string, step_id: string, notes?: string) =>
+    postJSON(`/workflow-runs/${run_id}/steps/${step_id}/approve`, { notes }),
+
+  rejectStep: (run_id: string, step_id: string, feedback: string) =>
+    postJSON(`/workflow-runs/${run_id}/steps/${step_id}/reject`, { feedback }),
+
+  rebriefStep: (
+    run_id: string,
+    step_id: string,
+    feedback: string,
+    mode: 'rerun_step' | 'restart_from_step' | 'restart_entire_workflow' = 'rerun_step',
+    target_step_id?: string,
+  ) => postJSON(`/workflow-runs/${run_id}/steps/${step_id}/rebrief`, {
+    feedback, mode, target_step_id,
+  }),
+
+  // SSE stream de um step — GET endpoint
+  streamWorkflowStep: (
+    run_id: string,
+    step_id: string,
+    onChunk: (text: string) => void,
+    onDone: (runStatus: string) => void,
+    onError: (e: Error) => void,
+    onStepEvent?: (event: string, payload: object) => void,
+  ) => {
+    const controller = new AbortController()
+
+    fetch(`${API_BASE}/workflow-runs/${run_id}/steps/${step_id}/stream`, {
+      signal: controller.signal,
+    })
+      .then(async (res) => {
+        if (!res.ok) throw new Error(await res.text())
+        await readSSE(
+          res,
+          onChunk,
+          (ev, payload) => {
+            if (ev === '__STEP_DONE__') {
+              onDone((payload as any).run_status ?? 'completed')
+            } else {
+              onStepEvent?.(ev, payload)
+            }
+          },
+          () => onDone('completed'),
+          onError,
+        )
+      })
+      .catch((e) => { if (e.name !== 'AbortError') onError(e) })
+
+    return () => controller.abort()
+  },
+
+  // ─── Legacy: /generate/* (mantido para compatibilidade) ────────────────────
   streamGenerate: (
     endpoint: string,
     data: object,
@@ -60,50 +155,21 @@ export const api = {
     })
       .then(async (res) => {
         if (!res.ok) throw new Error(await res.text())
-        const reader = res.body!.getReader()
-        const decoder = new TextDecoder()
-        while (true) {
-          const { done, value } = await reader.read()
-          if (done) break
-          const chunk = decoder.decode(value)
-          const lines = chunk.split('\n')
-          for (const line of lines) {
-            if (line.startsWith('data: ')) {
-              const raw = line.slice(6)
-              if (raw === '[DONE]') { onDone(); return }
-              try {
-                const parsed = JSON.parse(raw)
-                if (parsed.text) {
-                  onChunk(parsed.text)
-                } else if (parsed.event) {
-                  const ev: string = parsed.event
-                  if (ev.startsWith('__AM_DONE__')) {
-                    try {
-                      const meta = JSON.parse(ev.replace('__AM_DONE__', ''))
-                      onPhase?.('am_done', meta)
-                    } catch { onPhase?.('am_done') }
-                  } else if (ev === '__AM_START__') {
-                    onPhase?.('am_start')
-                  } else if (ev === '__SKILL_START__') {
-                    onPhase?.('skill_start')
-                  } else if (ev.startsWith('__ERROR__')) {
-                    const msg = ev.replace('__ERROR__', '')
-                    onError(new Error(msg))
-                    onDone()
-                    return
-                  }
-                }
-              } catch {
-                onChunk(raw)
-              }
-            }
-          }
-        }
-        onDone()
+        await readSSE(
+          res,
+          onChunk,
+          (ev) => {
+            if (ev.startsWith('__AM_DONE__')) {
+              try { onPhase?.('am_done', JSON.parse(ev.replace('__AM_DONE__', ''))) }
+              catch { onPhase?.('am_done') }
+            } else if (ev === '__AM_START__') onPhase?.('am_start')
+            else if (ev === '__SKILL_START__') onPhase?.('skill_start')
+          },
+          onDone,
+          onError,
+        )
       })
-      .catch((e) => {
-        if (e.name !== 'AbortError') onError(e)
-      })
+      .catch((e) => { if (e.name !== 'AbortError') onError(e) })
 
     return () => controller.abort()
   },
