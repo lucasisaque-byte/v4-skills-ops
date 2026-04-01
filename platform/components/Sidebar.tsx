@@ -1,5 +1,6 @@
 'use client'
 
+import { useState } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import {
@@ -14,8 +15,10 @@ import {
   Video,
   FolderOpen,
   Kanban,
+  Plus,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import { NewTaskModal } from '@/components/NewTaskModal'
 
 const nav = [
   { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
@@ -34,8 +37,11 @@ const nav = [
 
 export function Sidebar() {
   const pathname = usePathname()
+  const [modalOpen, setModalOpen] = useState(false)
 
   return (
+    <>
+    <NewTaskModal open={modalOpen} onClose={() => setModalOpen(false)} />
     <aside className="w-56 shrink-0 border-r border-border/60 flex flex-col py-4 bg-card">
       <div className="px-4 mb-6">
         <div className="flex items-center gap-2">
@@ -44,6 +50,16 @@ export function Sidebar() {
           </div>
           <span className="font-semibold text-sm tracking-tight">V4 Skills</span>
         </div>
+      </div>
+
+      <div className="px-2 mb-3">
+        <button
+          onClick={() => setModalOpen(true)}
+          className="w-full flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium bg-primary text-primary-foreground hover:bg-primary/90 transition-colors"
+        >
+          <Plus className="w-3.5 h-3.5" />
+          Nova tarefa
+        </button>
       </div>
 
       <nav className="flex flex-col gap-0.5 px-2 flex-1">
@@ -75,5 +91,6 @@ export function Sidebar() {
         })}
       </nav>
     </aside>
+    </>
   )
 }
