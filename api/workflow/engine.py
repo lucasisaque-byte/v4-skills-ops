@@ -54,6 +54,31 @@ def load_run(run_id: str, client_id: Optional[str] = None) -> Optional[WorkflowR
     return None
 
 
+def list_all_runs(limit: int = 100) -> list[dict]:
+    """Lista todos os runs de todos os clientes, ordenados por updated_at desc."""
+    result = []
+    for p in sorted(DATA_DIR.glob("clients/*/workflows/*/*/workflow.json"), reverse=True):
+        try:
+            raw = json.loads(p.read_text())
+            result.append({
+                "run_id":       raw["run_id"],
+                "client_id":    raw["client_id"],
+                "client_name":  raw.get("client_name", raw["client_id"]),
+                "task_type":    raw["task_type"],
+                "task_summary": raw["task_summary"],
+                "status":       raw["status"],
+                "template_id":  raw["template_id"],
+                "current_step_id": raw.get("current_step_id"),
+                "created_at":   raw["created_at"],
+                "updated_at":   raw["updated_at"],
+            })
+        except Exception:
+            pass
+        if len(result) >= limit:
+            break
+    return result
+
+
 def list_runs(client_id: str, task_type: Optional[str] = None) -> list[dict]:
     """Lista runs de um cliente, opcionalmente filtrado por task_type."""
     base = DATA_DIR / "clients" / client_id / "workflows"

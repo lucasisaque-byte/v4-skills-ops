@@ -99,6 +99,12 @@ def get_templates():
     return {"templates": list_templates()}
 
 
+@router.get("/workflow-runs")
+def list_all_workflow_runs(limit: int = 100):
+    """Lista todos os runs de todos os clientes (para painel de produção)."""
+    return {"runs": engine.list_all_runs(limit=limit)}
+
+
 @router.post("/workflow-runs")
 def create_workflow_run(req: CreateWorkflowRunRequest):
     """

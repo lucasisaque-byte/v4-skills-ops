@@ -83,6 +83,10 @@ export const api = {
 
   getWorkflowRun: (run_id: string) => fetchAPI(`/workflow-runs/${run_id}`),
 
+  listAllWorkflowRuns: (limit = 100) => fetchAPI(`/workflow-runs?limit=${limit}`),
+
+  listClientWorkflowRuns: (client_id: string) => fetchAPI(`/clients/${client_id}/workflow-runs`),
+
   listWorkflowTemplates: () => fetchAPI('/workflow-runs/templates'),
 
   approveStep: (run_id: string, step_id: string, notes?: string) =>
