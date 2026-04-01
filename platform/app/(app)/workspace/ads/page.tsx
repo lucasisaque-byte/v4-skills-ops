@@ -1,67 +1,58 @@
 'use client'
 
 import { useState } from 'react'
+import { useRouter } from 'next/navigation'
+import { api } from '@/lib/api'
 import { ClientPicker } from '@/components/ClientPicker'
-import { StreamOutput } from '@/components/StreamOutput'
-import { WorkflowStatusBar } from '@/components/WorkflowStatusBar'
-import { ApprovalPanel } from '@/components/ApprovalPanel'
 import { Button } from '@/components/ui/button'
-import { Badge } from '@/components/ui/badge'
-import { Image, Download, Loader2 } from 'lucide-react'
-import { useWorkflowRun } from '@/lib/useWorkflowRun'
+import { Image, Loader2 } from 'lucide-react'
 import type { Client } from '@/lib/store'
 
 const objectives = [
-  { value: 'leads', label: 'Geração de leads' },
-  { value: 'awareness', label: 'Awareness' },
+  { value: 'leads',      label: 'Geração de leads' },
+  { value: 'awareness',  label: 'Awareness' },
   { value: 'conversion', label: 'Conversão' },
 ]
 
 const platformOptions = [
-  { value: 'meta-feed', label: 'Meta Feed', desc: '4:5 · 800×1000' },
-  { value: 'meta-stories', label: 'Meta Stories', desc: '9:16 · 1080×1920' },
-  { value: 'google', label: 'Google Display', desc: '1.91:1 · 1200×628' },
-  { value: 'linkedin', label: 'LinkedIn', desc: '1.91:1 · 1200×628' },
+  { value: 'meta-feed',    label: 'Meta Feed',      desc: '4:5 · 800×1000' },
+  { value: 'meta-stories', label: 'Meta Stories',   desc: '9:16 · 1080×1920' },
+  { value: 'google',       label: 'Google Display', desc: '1.91:1 · 1200×628' },
+  { value: 'linkedin',     label: 'LinkedIn',       desc: '1.91:1 · 1200×628' },
 ]
 
 const tones = [
-  { value: 'urgencia', label: 'Urgência' },
-  { value: 'educacional', label: 'Educacional' },
-  { value: 'emocional', label: 'Emocional' },
-  { value: 'prova', label: 'Prova Social' },
+  { value: 'urgencia',     label: 'Urgência' },
+  { value: 'educacional',  label: 'Educacional' },
+  { value: 'emocional',    label: 'Emocional' },
+  { value: 'prova',        label: 'Prova Social' },
 ]
 
 export default function AdsPage() {
+  const router = useRouter()
   const [client, setClient] = useState<Client | null>(null)
   const [objective, setObjective] = useState('leads')
   const [platform, setPlatform] = useState('meta-feed')
   const [offer, setOffer] = useState('')
   const [tone, setTone] = useState('urgencia')
-  const { phase, meta, output, error, generate, approve, rebrief, reject, reset } = useWorkflowRun()
+  const [creating, setCreating] = useState(false)
+  const [error, setError] = useState<string | null>(null)
 
-  const isStreaming = phase === 'planning' || phase === 'streaming'
-  const phaseLabel = phase === 'planning' ? 'Account Manager preparando briefing...' : 'Gerando criativo...'
-
-  const handleGenerate = () => {
+  const handleCreate = async () => {
     if (!client || !offer.trim()) return
-    generate('ads', client.id, {
-      campaign_objective: objective,
-      platform,
-      offer_description: offer,
-      tone,
-    })
-  }
-
-  const downloadHTML = () => {
-    const htmlMatch = output.match(/```html\n([\s\S]*?)```/)
-    const html = htmlMatch ? htmlMatch[1] : output
-    const blob = new Blob([html], { type: 'text/html' })
-    const url = URL.createObjectURL(blob)
-    const a = document.createElement('a')
-    a.href = url
-    a.download = `criativo-${client?.id}-${Date.now()}.html`
-    a.click()
-    URL.revokeObjectURL(url)
+    setCreating(true)
+    setError(null)
+    try {
+      const run = await api.createWorkflowRun({
+        client_id: client.id,
+        task_type: 'ads',
+        input: { campaign_objective: objective, platform, offer_description: offer, tone },
+      })
+      router.push(`/workspace/runs/${run.run_id}`)
+    } catch (e: any) {
+      setError(e.message)
+      setCreating(false)
+    }
   }
 
   return (
@@ -74,21 +65,16 @@ export default function AdsPage() {
       </div>
 
       <div className="p-4 rounded-xl border border-border/60 bg-card space-y-4">
-        <ClientPicker value={client} onChange={(c) => { setClient(c); reset() }} />
+        <ClientPicker value={client} onChange={setClient} />
 
         <div className="space-y-1.5">
           <label className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Objetivo da campanha</label>
           <div className="flex gap-2">
             {objectives.map((o) => (
-              <button
-                key={o.value}
-                onClick={() => setObjective(o.value)}
-                className={`px-3 py-1.5 text-sm rounded-lg border transition-colors ${
-                  objective === o.value
-                    ? 'border-primary/60 bg-primary/10 text-foreground'
-                    : 'border-border/60 text-muted-foreground hover:text-foreground'
-                }`}
-              >
+              <button key={o.value} onClick={() => setObjective(o.value)}
+                className={`px-3 py-1.5 text-sm rounded-lg border transition-colors ${objective === o.value
+                  ? 'border-primary/60 bg-primary/10 text-foreground'
+                  : 'border-border/60 text-muted-foreground hover:text-foreground'}`}>
                 {o.label}
               </button>
             ))}
@@ -99,15 +85,10 @@ export default function AdsPage() {
           <label className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Plataforma e formato</label>
           <div className="grid grid-cols-2 gap-2">
             {platformOptions.map((p) => (
-              <button
-                key={p.value}
-                onClick={() => setPlatform(p.value)}
-                className={`px-3 py-2 text-sm rounded-lg border text-left transition-colors ${
-                  platform === p.value
-                    ? 'border-primary/60 bg-primary/10 text-foreground'
-                    : 'border-border/60 text-muted-foreground hover:text-foreground'
-                }`}
-              >
+              <button key={p.value} onClick={() => setPlatform(p.value)}
+                className={`px-3 py-2 text-sm rounded-lg border text-left transition-colors ${platform === p.value
+                  ? 'border-primary/60 bg-primary/10 text-foreground'
+                  : 'border-border/60 text-muted-foreground hover:text-foreground'}`}>
                 <div className="font-medium">{p.label}</div>
                 <div className="text-xs opacity-70">{p.desc}</div>
               </button>
@@ -130,49 +111,24 @@ export default function AdsPage() {
           <label className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Tom do criativo</label>
           <div className="flex gap-2 flex-wrap">
             {tones.map((t) => (
-              <button
-                key={t.value}
-                onClick={() => setTone(t.value)}
-                className={`px-3 py-1.5 text-sm rounded-lg border transition-colors ${
-                  tone === t.value
-                    ? 'border-primary/60 bg-primary/10 text-foreground'
-                    : 'border-border/60 text-muted-foreground hover:text-foreground'
-                }`}
-              >
+              <button key={t.value} onClick={() => setTone(t.value)}
+                className={`px-3 py-1.5 text-sm rounded-lg border transition-colors ${tone === t.value
+                  ? 'border-primary/60 bg-primary/10 text-foreground'
+                  : 'border-border/60 text-muted-foreground hover:text-foreground'}`}>
                 {t.label}
               </button>
             ))}
           </div>
         </div>
 
-        <Button onClick={handleGenerate} disabled={!client || isStreaming || !offer.trim()} className="w-full">
-          {isStreaming ? <><Loader2 className="w-3.5 h-3.5 mr-2 animate-spin" />{phaseLabel}</> : 'Gerar Criativo'}
+        {error && <p className="text-xs text-red-400">{error}</p>}
+
+        <Button onClick={handleCreate} disabled={!client || creating || !offer.trim()} className="w-full">
+          {creating
+            ? <><Loader2 className="w-3.5 h-3.5 mr-2 animate-spin" />Iniciando workflow...</>
+            : 'Iniciar workflow de Criativo'}
         </Button>
       </div>
-
-      {meta && <WorkflowStatusBar meta={meta} phase={phase} />}
-      {phase === 'waiting_approval' && meta && (
-        <ApprovalPanel meta={meta} onApprove={approve} onRebrief={(fb) => rebrief(fb)} onReject={reject} />
-      )}
-      {error && <p className="text-sm text-red-400 px-1">Erro: {error}</p>}
-
-      {(output || isStreaming || phase === 'waiting_approval') && (
-        <div className="space-y-2">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <span className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Criativo gerado</span>
-              {isStreaming && <Badge variant="secondary" className="text-xs animate-pulse">{phaseLabel}</Badge>}
-              {phase === 'waiting_approval' && <Badge variant="outline" className="text-xs border-amber-400/40 text-amber-300">aguardando aprovação</Badge>}
-            </div>
-            {output && phase === 'done' && (
-              <Button size="sm" variant="ghost" className="h-7 gap-1.5 text-xs" onClick={downloadHTML}>
-                <Download className="w-3 h-3" /> Download HTML
-              </Button>
-            )}
-          </div>
-          <StreamOutput content={output} isStreaming={isStreaming} className="min-h-[400px] max-h-[600px]" />
-        </div>
-      )}
     </div>
   )
 }

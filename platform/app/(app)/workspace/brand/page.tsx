@@ -1,45 +1,43 @@
 'use client'
 
 import { useState } from 'react'
+import { useRouter } from 'next/navigation'
+import { api } from '@/lib/api'
 import { ClientPicker } from '@/components/ClientPicker'
-import { StreamOutput } from '@/components/StreamOutput'
-import { WorkflowStatusBar } from '@/components/WorkflowStatusBar'
-import { ApprovalPanel } from '@/components/ApprovalPanel'
 import { Button } from '@/components/ui/button'
-import { Badge } from '@/components/ui/badge'
-import { Palette, Download, Loader2 } from 'lucide-react'
-import { useWorkflowRun } from '@/lib/useWorkflowRun'
+import { Palette, Loader2 } from 'lucide-react'
 import type { Client } from '@/lib/store'
 
 export default function BrandPage() {
+  const router = useRouter()
   const [client, setClient] = useState<Client | null>(null)
   const [url, setUrl] = useState('')
   const [instagram, setInstagram] = useState('')
   const [linkedin, setLinkedin] = useState('')
   const [context, setContext] = useState('')
-  const { phase, meta, output, error, generate, approve, rebrief, reject, reset } = useWorkflowRun()
+  const [creating, setCreating] = useState(false)
+  const [error, setError] = useState<string | null>(null)
 
-  const isStreaming = phase === 'planning' || phase === 'streaming'
-  const phaseLabel = phase === 'planning' ? 'Account Manager preparando briefing...' : 'Extraindo brand system...'
-
-  const handleGenerate = () => {
+  const handleCreate = async () => {
     if (!url.trim()) return
-    generate('brand_system', client?.id || 'new', {
-      site_url: url,
-      instagram: instagram || undefined,
-      linkedin: linkedin || undefined,
-      additional_context: context || undefined,
-    })
-  }
-
-  const download = () => {
-    const blob = new Blob([output], { type: 'text/markdown' })
-    const url_dl = URL.createObjectURL(blob)
-    const a = document.createElement('a')
-    a.href = url_dl
-    a.download = `brand-system-${client?.id || 'novo'}-${Date.now()}.md`
-    a.click()
-    URL.revokeObjectURL(url_dl)
+    setCreating(true)
+    setError(null)
+    try {
+      const run = await api.createWorkflowRun({
+        client_id: client?.id || 'new',
+        task_type: 'brand_system',
+        input: {
+          site_url: url,
+          instagram: instagram || undefined,
+          linkedin: linkedin || undefined,
+          additional_context: context || undefined,
+        },
+      })
+      router.push(`/workspace/runs/${run.run_id}`)
+    } catch (e: any) {
+      setError(e.message)
+      setCreating(false)
+    }
   }
 
   return (
@@ -52,7 +50,7 @@ export default function BrandPage() {
       </div>
 
       <div className="p-4 rounded-xl border border-border/60 bg-card space-y-4">
-        <ClientPicker value={client} onChange={(c) => { setClient(c); reset() }} />
+        <ClientPicker value={client} onChange={setClient} />
 
         <div className="space-y-1.5">
           <label className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
@@ -69,21 +67,13 @@ export default function BrandPage() {
         <div className="grid grid-cols-2 gap-3">
           <div className="space-y-1.5">
             <label className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Instagram</label>
-            <input
-              className="w-full bg-background border border-border/60 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-ring"
-              placeholder="@handle"
-              value={instagram}
-              onChange={(e) => setInstagram(e.target.value)}
-            />
+            <input className="w-full bg-background border border-border/60 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-ring"
+              placeholder="@handle" value={instagram} onChange={(e) => setInstagram(e.target.value)} />
           </div>
           <div className="space-y-1.5">
             <label className="text-xs font-medium text-muted-foreground uppercase tracking-wider">LinkedIn</label>
-            <input
-              className="w-full bg-background border border-border/60 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-ring"
-              placeholder="/company/empresa"
-              value={linkedin}
-              onChange={(e) => setLinkedin(e.target.value)}
-            />
+            <input className="w-full bg-background border border-border/60 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-ring"
+              placeholder="/company/empresa" value={linkedin} onChange={(e) => setLinkedin(e.target.value)} />
           </div>
         </div>
 
@@ -100,34 +90,14 @@ export default function BrandPage() {
           />
         </div>
 
-        <Button onClick={handleGenerate} disabled={isStreaming || !url.trim()} className="w-full">
-          {isStreaming ? <><Loader2 className="w-3.5 h-3.5 mr-2 animate-spin" />{phaseLabel}</> : 'Gerar Brand System'}
+        {error && <p className="text-xs text-red-400">{error}</p>}
+
+        <Button onClick={handleCreate} disabled={creating || !url.trim()} className="w-full">
+          {creating
+            ? <><Loader2 className="w-3.5 h-3.5 mr-2 animate-spin" />Iniciando workflow...</>
+            : 'Iniciar workflow de Brand System'}
         </Button>
       </div>
-
-      {meta && <WorkflowStatusBar meta={meta} phase={phase} />}
-      {phase === 'waiting_approval' && meta && (
-        <ApprovalPanel meta={meta} onApprove={approve} onRebrief={(fb) => rebrief(fb)} onReject={reject} />
-      )}
-      {error && <p className="text-sm text-red-400 px-1">Erro: {error}</p>}
-
-      {(output || isStreaming || phase === 'waiting_approval') && (
-        <div className="space-y-2">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <span className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Brand System</span>
-              {isStreaming && <Badge variant="secondary" className="text-xs animate-pulse">{phaseLabel}</Badge>}
-              {phase === 'waiting_approval' && <Badge variant="outline" className="text-xs border-amber-400/40 text-amber-300">aguardando aprovação</Badge>}
-            </div>
-            {output && phase === 'done' && (
-              <Button size="sm" variant="ghost" className="h-7 gap-1.5 text-xs" onClick={download}>
-                <Download className="w-3 h-3" /> Exportar .md
-              </Button>
-            )}
-          </div>
-          <StreamOutput content={output} isStreaming={isStreaming} className="min-h-[400px] max-h-[600px]" />
-        </div>
-      )}
     </div>
   )
 }

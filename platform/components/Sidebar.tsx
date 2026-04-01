@@ -13,6 +13,7 @@ import {
   Anchor,
   Video,
   FolderOpen,
+  Kanban,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
@@ -26,7 +27,8 @@ const nav = [
   { href: '/workspace/brand', label: 'Brand System', icon: Palette },
   { href: '/workspace/hooks', label: 'Hook Engineer', icon: Anchor },
   { href: '/workspace/scripts', label: 'Script de Reels', icon: Video },
-  { type: 'divider', label: 'Histórico' },
+  { type: 'divider', label: 'Produção' },
+  { href: '/producao', label: 'Painel de Produção', icon: Kanban },
   { href: '/outputs', label: 'Entregáveis', icon: FolderOpen },
 ]
 

@@ -1,14 +1,11 @@
 'use client'
 
 import { useState } from 'react'
+import { useRouter } from 'next/navigation'
+import { api } from '@/lib/api'
 import { ClientPicker } from '@/components/ClientPicker'
-import { StreamOutput } from '@/components/StreamOutput'
-import { WorkflowStatusBar } from '@/components/WorkflowStatusBar'
-import { ApprovalPanel } from '@/components/ApprovalPanel'
 import { Button } from '@/components/ui/button'
-import { Badge } from '@/components/ui/badge'
-import { CalendarDays, Download, Loader2 } from 'lucide-react'
-import { useWorkflowRun } from '@/lib/useWorkflowRun'
+import { CalendarDays, Loader2 } from 'lucide-react'
 import type { Client } from '@/lib/store'
 
 const months = [
@@ -20,6 +17,7 @@ const frequencies = ['3x/semana', '5x/semana', 'Diário']
 const allPlatforms = ['Instagram', 'LinkedIn', 'TikTok']
 
 export default function SocialPage() {
+  const router = useRouter()
   const [client, setClient] = useState<Client | null>(null)
   const currentMonthIndex = new Date().getMonth()
   const [month, setMonth] = useState(months[currentMonthIndex] || months[3])
@@ -28,32 +26,32 @@ export default function SocialPage() {
   const [objective, setObjective] = useState('')
   const [pillarMode, setPillarMode] = useState('auto')
   const [customPillars, setCustomPillars] = useState('')
-  const { phase, meta, output, error, generate, approve, rebrief, reject, reset } = useWorkflowRun()
-
-  const isStreaming = phase === 'planning' || phase === 'streaming'
-  const phaseLabel = phase === 'planning' ? 'Account Manager preparando briefing...' : 'Gerando calendário...'
+  const [creating, setCreating] = useState(false)
+  const [error, setError] = useState<string | null>(null)
 
   const togglePlatform = (p: string) =>
     setPlatforms((prev) => prev.includes(p) ? prev.filter((x) => x !== p) : [...prev, p])
 
-  const handleGenerate = () => {
+  const handleCreate = async () => {
     if (!client || platforms.length === 0) return
-    generate('calendar', client.id, {
-      month, frequency, platforms,
-      monthly_objective: objective,
-      pillar_mode: pillarMode,
-      custom_pillars: pillarMode === 'manual' ? customPillars : undefined,
-    })
-  }
-
-  const download = () => {
-    const blob = new Blob([output], { type: 'text/plain' })
-    const url = URL.createObjectURL(blob)
-    const a = document.createElement('a')
-    a.href = url
-    a.download = `calendario-${client?.id}-${month.replace(' ', '-')}.md`
-    a.click()
-    URL.revokeObjectURL(url)
+    setCreating(true)
+    setError(null)
+    try {
+      const run = await api.createWorkflowRun({
+        client_id: client.id,
+        task_type: 'calendar',
+        input: {
+          month, frequency, platforms,
+          monthly_objective: objective,
+          pillar_mode: pillarMode,
+          custom_pillars: pillarMode === 'manual' ? customPillars : undefined,
+        },
+      })
+      router.push(`/workspace/runs/${run.run_id}`)
+    } catch (e: any) {
+      setError(e.message)
+      setCreating(false)
+    }
   }
 
   return (
@@ -66,7 +64,7 @@ export default function SocialPage() {
       </div>
 
       <div className="p-4 rounded-xl border border-border/60 bg-card space-y-4">
-        <ClientPicker value={client} onChange={(c) => { setClient(c); reset() }} />
+        <ClientPicker value={client} onChange={setClient} />
 
         <div className="grid grid-cols-2 gap-4">
           <div className="space-y-1.5">
@@ -133,34 +131,14 @@ export default function SocialPage() {
           )}
         </div>
 
-        <Button onClick={handleGenerate} disabled={!client || isStreaming || platforms.length === 0} className="w-full">
-          {isStreaming ? <><Loader2 className="w-3.5 h-3.5 mr-2 animate-spin" />{phaseLabel}</> : 'Gerar Calendário'}
+        {error && <p className="text-xs text-red-400">{error}</p>}
+
+        <Button onClick={handleCreate} disabled={!client || creating || platforms.length === 0} className="w-full">
+          {creating
+            ? <><Loader2 className="w-3.5 h-3.5 mr-2 animate-spin" />Iniciando workflow...</>
+            : 'Iniciar workflow de Calendário'}
         </Button>
       </div>
-
-      {meta && <WorkflowStatusBar meta={meta} phase={phase} />}
-      {phase === 'waiting_approval' && meta && (
-        <ApprovalPanel meta={meta} onApprove={approve} onRebrief={(fb) => rebrief(fb)} onReject={reject} />
-      )}
-      {error && <p className="text-sm text-red-400 px-1">Erro: {error}</p>}
-
-      {(output || isStreaming || phase === 'waiting_approval') && (
-        <div className="space-y-2">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <span className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Calendário</span>
-              {isStreaming && <Badge variant="secondary" className="text-xs animate-pulse">{phaseLabel}</Badge>}
-              {phase === 'waiting_approval' && <Badge variant="outline" className="text-xs border-amber-400/40 text-amber-300">aguardando aprovação</Badge>}
-            </div>
-            {output && phase === 'done' && (
-              <Button size="sm" variant="ghost" className="h-7 gap-1.5 text-xs" onClick={download}>
-                <Download className="w-3 h-3" /> Exportar .md
-              </Button>
-            )}
-          </div>
-          <StreamOutput content={output} isStreaming={isStreaming} className="min-h-[400px] max-h-[600px]" />
-        </div>
-      )}
     </div>
   )
 }
