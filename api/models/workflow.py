@@ -8,7 +8,7 @@ Três camadas:
 """
 from __future__ import annotations
 from typing import Literal, Optional
-from pydantic import BaseModel, Field
+from pydantic import BaseModel
 
 
 # ─── Workflow Template (DSL estático) ─────────────────────────────────────────
@@ -145,6 +145,7 @@ class StepRun(BaseModel):
     step_id: str
     title: str
     primary_skill: str
+    gate_type: Optional[str] = None   # "briefing" | "copy" | "hook" | "calendar" | "design" | "final"
     briefing: str = ""
     status: StepStatus = "pending"
     artifacts: list[StepArtifact] = []

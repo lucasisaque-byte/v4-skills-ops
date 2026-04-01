@@ -37,11 +37,19 @@ interface Props {
 export function WorkflowStatusBar({ meta, phase }: Props) {
   const { ui_summary, observations, template_id } = meta
   const isStreaming = phase === 'streaming'
+  const isWaiting = phase === 'waiting_approval'
+  const isDone = phase === 'done'
 
   return (
-    <div className="rounded-xl border border-border/60 bg-card overflow-hidden">
-      {/* Header — workflow acionado */}
-      <div className="flex items-center gap-2.5 px-4 py-2.5 border-b border-border/40 bg-muted/20">
+    <div className={cn(
+      'rounded-xl border bg-card overflow-hidden',
+      isWaiting ? 'border-amber-400/30' : 'border-border/60'
+    )}>
+      {/* Header */}
+      <div className={cn(
+        'flex items-center gap-2.5 px-4 py-2.5 border-b bg-muted/20',
+        isWaiting ? 'border-amber-400/20' : 'border-border/40'
+      )}>
         <Zap className="w-3.5 h-3.5 text-yellow-400 shrink-0" />
         <span className="text-xs font-medium text-muted-foreground">Workflow</span>
         <span className="text-xs text-foreground font-semibold">{template_id}</span>
@@ -54,6 +62,7 @@ export function WorkflowStatusBar({ meta, phase }: Props) {
               ))}
             </span>
           )}
+          {isDone && <span className="w-1.5 h-1.5 rounded-full bg-green-400 shrink-0" />}
           <span className="text-xs text-muted-foreground">{ui_summary.current_stage_label}</span>
         </span>
       </div>

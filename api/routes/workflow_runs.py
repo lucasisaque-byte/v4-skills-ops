@@ -247,6 +247,12 @@ def _build_task_description(task_type: str, inp: dict) -> str:
             + (f"Campanha: {i['campaign']}. " if i.get('campaign') else "")
             + (f"Persona foco: {i['persona_focus']}." if i.get('persona_focus') else "")
         ),
+        "brand_system": lambda i: (
+            f"Construir brand system completo. Site: {i.get('site_url', '')}."
+            + (f" Instagram: @{i['instagram']}." if i.get('instagram') else "")
+            + (f" LinkedIn: {i['linkedin']}." if i.get('linkedin') else "")
+            + (f" Contexto: {i['additional_context']}." if i.get('additional_context') else "")
+        ),
     }
     builder = builders.get(task_type)
     if builder:

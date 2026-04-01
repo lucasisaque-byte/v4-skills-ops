@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { ClientPicker } from '@/components/ClientPicker'
 import { StreamOutput } from '@/components/StreamOutput'
 import { WorkflowStatusBar } from '@/components/WorkflowStatusBar'
+import { ApprovalPanel } from '@/components/ApprovalPanel'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { CalendarDays, Download, Loader2 } from 'lucide-react'
@@ -27,7 +28,7 @@ export default function SocialPage() {
   const [objective, setObjective] = useState('')
   const [pillarMode, setPillarMode] = useState('auto')
   const [customPillars, setCustomPillars] = useState('')
-  const { phase, meta, output, error, generate, reset } = useWorkflowRun()
+  const { phase, meta, output, error, generate, approve, rebrief, reject, reset } = useWorkflowRun()
 
   const isStreaming = phase === 'planning' || phase === 'streaming'
   const phaseLabel = phase === 'planning' ? 'Account Manager preparando briefing...' : 'Gerando calendário...'
@@ -138,14 +139,18 @@ export default function SocialPage() {
       </div>
 
       {meta && <WorkflowStatusBar meta={meta} phase={phase} />}
+      {phase === 'waiting_approval' && meta && (
+        <ApprovalPanel meta={meta} onApprove={approve} onRebrief={(fb) => rebrief(fb)} onReject={reject} />
+      )}
       {error && <p className="text-sm text-red-400 px-1">Erro: {error}</p>}
 
-      {(output || isStreaming) && (
+      {(output || isStreaming || phase === 'waiting_approval') && (
         <div className="space-y-2">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               <span className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Calendário</span>
               {isStreaming && <Badge variant="secondary" className="text-xs animate-pulse">{phaseLabel}</Badge>}
+              {phase === 'waiting_approval' && <Badge variant="outline" className="text-xs border-amber-400/40 text-amber-300">aguardando aprovação</Badge>}
             </div>
             {output && phase === 'done' && (
               <Button size="sm" variant="ghost" className="h-7 gap-1.5 text-xs" onClick={download}>

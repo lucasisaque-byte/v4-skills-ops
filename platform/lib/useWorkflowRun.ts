@@ -10,7 +10,9 @@ export interface WorkflowMeta {
   template_id: string
   task_summary: string
   current_step_id: string
+  current_step_title: string
   current_step_skill: string
+  gate_type: string | null
   ui_summary: {
     primary_skill_for_next_step: string
     skills_used_to_build_current_material: string[]
@@ -65,7 +67,9 @@ export function useWorkflowRun(): UseWorkflowRunReturn {
           template_id:          run.template_id,
           task_summary:         run.task_summary,
           current_step_id:      firstStep.step_id,
+          current_step_title:   firstStep.title ?? firstStep.step_id,
           current_step_skill:   firstStep.primary_skill,
+          gate_type:            firstStep.gate_type ?? null,
           ui_summary:           run.ui_summary,
           observations:         run.observations ?? '',
           run_status:           run.status,
@@ -105,7 +109,9 @@ export function useWorkflowRun(): UseWorkflowRunReturn {
       setMeta((prev) => prev ? {
         ...prev,
         current_step_id:    res.next_step.step_id,
+        current_step_title: res.next_step.title ?? res.next_step.step_id,
         current_step_skill: res.next_step.primary_skill,
+        gate_type:          res.next_step.gate_type ?? null,
         run_status:         res.status,
       } : prev)
 

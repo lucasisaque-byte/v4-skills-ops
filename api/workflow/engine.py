@@ -99,6 +99,11 @@ def create_run(
             step_id=tpl_step.id,
             title=tpl_step.title,
             primary_skill=tpl_step.primary_skill,
+            gate_type=(
+                tpl_step.approval_gate.type
+                if tpl_step.approval_gate and tpl_step.approval_gate.required
+                else None
+            ),
             briefing=briefing_map.get(tpl_step.id, ""),
             status="ready" if i == 0 else "pending",
         )
