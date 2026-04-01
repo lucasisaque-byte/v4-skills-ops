@@ -3,17 +3,97 @@
   "version": "1.0.0",
   "task_type": "hooks",
   "display_name": "Hook Engineer",
+  "metadata": {
+    "deliverable_type": "Variações de Hook",
+    "category": "social_conteudo",
+    "description": "Produz 5 variações de hook para um tema específico, otimizadas por plataforma e persona do cliente, com briefing estratégico do AM.",
+    "owner": "account-manager"
+  },
+  "entry_requirements": {
+    "user_inputs": [
+      "theme — tema ou assunto do post",
+      "platform — Instagram, LinkedIn ou TikTok/Reels"
+    ],
+    "required_client_context": ["dcc"],
+    "optional_client_context": ["ucm"],
+    "fallbacks": [
+      {
+        "when": "missing_dcc",
+        "action": "AM solicita ao usuário informações mínimas sobre público-alvo antes de prosseguir"
+      }
+    ]
+  },
+  "phases": ["planejamento", "producao_estrategica"],
   "steps": [
     {
-      "id": "hook_generation",
-      "title": "Geração de 5 hooks",
-      "primary_skill": "hook-engineer",
+      "id": "am_briefing",
+      "title": "Briefing de Hook",
+      "goal": "Identificar persona-alvo, ângulos narrativos relevantes e contexto do tema com base no DCC. Gerar briefing executável para hook engineer.",
+      "phase": "planejamento",
+      "primary_skill": "account-manager",
       "support_skills": [],
       "input_artifacts": [],
+      "output_artifacts": ["briefing.md"],
+      "approval_gate": {
+        "required": true,
+        "type": "briefing",
+        "approve_action": "Avança para hook_generation com briefing.md como entrada",
+        "reject_action": "AM refaz briefing com feedback do usuário",
+        "rebrief_action": "AM ajusta briefing e reapresenta"
+      },
+      "rebrief_policy": {
+        "allowed": true,
+        "mode": "rerun_step",
+        "invalidates": ["hook_generation"]
+      },
+      "quality_checks": [
+        { "criterion": "persona_identificada", "description": "Persona-alvo com dores e desejos relevantes ao tema identificada." },
+        { "criterion": "angulos_sugeridos", "description": "Pelo menos 3 ângulos narrativos sugeridos (contrarian, dado, erro, lacuna, promessa)." },
+        { "criterion": "plataforma_considerada", "description": "Características da plataforma (formato, comportamento do feed) consideradas." }
+      ]
+    },
+    {
+      "id": "hook_generation",
+      "title": "Geração de Hooks",
+      "goal": "Gerar 5 variações de hook, cada uma em um ângulo narrativo diferente, otimizadas para a plataforma e persona definidos no briefing.",
+      "phase": "producao_estrategica",
+      "primary_skill": "hook-engineer",
+      "support_skills": [],
+      "input_artifacts": ["briefing.md"],
       "output_artifacts": ["hooks.md"],
-      "approval_gate": { "required": false, "type": "output" },
-      "rebrief_policy": { "allowed": true, "mode": "rerun_step" }
+      "approval_gate": {
+        "required": true,
+        "type": "hook",
+        "approve_action": "Workflow marcado como completed; hooks disponíveis para cópia e uso",
+        "reject_action": "Hook Engineer gera novas variações com base no feedback",
+        "rebrief_action": "Hook Engineer ajusta ângulos ou formatos específicos indicados"
+      },
+      "rebrief_policy": {
+        "allowed": true,
+        "mode": "rerun_step",
+        "invalidates": []
+      },
+      "quality_checks": [
+        { "criterion": "cinco_variacoes", "description": "Exatamente 5 variações entregues." },
+        { "criterion": "angulos_distintos", "description": "Cada hook usa um ângulo narrativo diferente." },
+        { "criterion": "especificidade", "description": "Hooks são específicos ao tema e à persona, não genéricos." },
+        { "criterion": "adequacao_a_plataforma", "description": "Formato e tom adequados à plataforma definida." },
+        { "criterion": "forca_de_parada", "description": "Cada hook provoca curiosidade ou interrupção do scroll." }
+      ]
     }
   ],
+  "handoff_rules": [
+    {
+      "from_step": "am_briefing",
+      "to_step": "hook_generation",
+      "rule": "briefing.md é a única entrada do hook engineer. A skill não lê DCC diretamente.",
+      "mediator": "account-manager"
+    }
+  ],
+  "completion_rules": {
+    "final_step_id": "hook_generation",
+    "final_artifact": "hooks.md",
+    "requires_all_gates": true
+  },
   "fallbacks": []
 }

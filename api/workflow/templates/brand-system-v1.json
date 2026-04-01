@@ -1,0 +1,134 @@
+{
+  "template_id": "brand-system-v1",
+  "version": "1.0.0",
+  "task_type": "brand_system",
+  "display_name": "Brand System Builder",
+  "metadata": {
+    "deliverable_type": "Brand System Completo",
+    "category": "marca_sistema_visual",
+    "description": "Extrai e codifica o sistema de identidade visual completo do cliente — brand intel, identidade visual, design system de social e design tokens.",
+    "owner": "account-manager"
+  },
+  "entry_requirements": {
+    "user_inputs": [
+      "site_url — URL do site do cliente",
+      "instagram (opcional) — @handle do Instagram",
+      "linkedin (opcional) — /company/empresa",
+      "additional_context (opcional) — segmento, posicionamento, concorrentes"
+    ],
+    "required_client_context": [],
+    "optional_client_context": ["dcc"],
+    "fallbacks": [
+      {
+        "when": "missing_dcc",
+        "action": "Brand Intel trabalha exclusivamente com as fontes externas fornecidas (site, redes sociais)"
+      }
+    ]
+  },
+  "phases": ["planejamento", "inteligencia", "producao_estrategica"],
+  "steps": [
+    {
+      "id": "am_briefing",
+      "title": "Briefing de Brand",
+      "goal": "Consolidar fontes fornecidas pelo usuário, identificar contexto de mercado e definir escopo do brand system. Gerar briefing para brand intel.",
+      "phase": "planejamento",
+      "primary_skill": "account-manager",
+      "support_skills": [],
+      "input_artifacts": [],
+      "output_artifacts": ["briefing.md"],
+      "approval_gate": {
+        "required": true,
+        "type": "briefing",
+        "approve_action": "Avança para brand_intel com briefing.md como entrada",
+        "reject_action": "AM refaz briefing com feedback do usuário",
+        "rebrief_action": "AM ajusta escopo ou fontes e reapresenta"
+      },
+      "rebrief_policy": {
+        "allowed": true,
+        "mode": "rerun_step",
+        "invalidates": ["brand_intel", "brand_system_build"]
+      },
+      "quality_checks": [
+        { "criterion": "fontes_listadas", "description": "Todas as fontes externas (site, redes, assets) estão listadas." },
+        { "criterion": "contexto_de_mercado", "description": "Segmento, posicionamento e concorrentes identificados." },
+        { "criterion": "escopo_definido", "description": "Os 4 entregáveis esperados (brand-raw, identidade, design-system, tokens) estão confirmados." }
+      ]
+    },
+    {
+      "id": "brand_intel",
+      "title": "Brand Intelligence",
+      "goal": "Analisar fontes externas (site, redes, assets) e extrair: paleta, tipografia, personalidade, tom de voz e posicionamento visual do cliente.",
+      "phase": "inteligencia",
+      "primary_skill": "brand-intel",
+      "support_skills": [],
+      "input_artifacts": ["briefing.md"],
+      "output_artifacts": ["brand-raw.json"],
+      "approval_gate": {
+        "required": false,
+        "type": "none",
+        "approve_action": "Avança automaticamente para brand_system_build",
+        "reject_action": "N/A",
+        "rebrief_action": "N/A"
+      },
+      "rebrief_policy": {
+        "allowed": false,
+        "mode": "rerun_step",
+        "invalidates": ["brand_system_build"]
+      },
+      "quality_checks": [
+        { "criterion": "paleta_extraida", "description": "Pelo menos 3 cores com hex identificadas e classificadas (primária, secundária, neutra)." },
+        { "criterion": "tipografia_identificada", "description": "Famílias tipográficas e pesos em uso identificados." },
+        { "criterion": "personalidade_mapeada", "description": "3 a 5 adjetivos de personalidade da marca com evidências visuais." },
+        { "criterion": "tom_de_voz", "description": "Tom de comunicação derivado das fontes analisadas." }
+      ]
+    },
+    {
+      "id": "brand_system_build",
+      "title": "Construção do Brand System",
+      "goal": "Gerar os 3 documentos do brand system: identidade-visual.md, design-system-social-media.md e design-tokens.json com base no brand-raw.json.",
+      "phase": "producao_estrategica",
+      "primary_skill": "brand-system-builder",
+      "support_skills": [],
+      "input_artifacts": ["briefing.md", "brand-raw.json"],
+      "output_artifacts": ["identidade-visual.md", "design-system-social-media.md", "design-tokens.json"],
+      "approval_gate": {
+        "required": true,
+        "type": "final",
+        "approve_action": "Workflow completed; brand system salvo no perfil do cliente",
+        "reject_action": "Brand system revisado com feedback do usuário",
+        "rebrief_action": "Builder revisa documentos específicos indicados no feedback"
+      },
+      "rebrief_policy": {
+        "allowed": true,
+        "mode": "rerun_step",
+        "invalidates": []
+      },
+      "quality_checks": [
+        { "criterion": "identidade_completa", "description": "identidade-visual.md cobre paleta, tipografia, personalidade, tom e exemplos de uso." },
+        { "criterion": "design_system_social", "description": "design-system-social-media.md define regras por formato (feed, stories, reels)." },
+        { "criterion": "tokens_validos", "description": "design-tokens.json com variáveis CSS/JSON para todas as cores, fontes e espaçamentos." },
+        { "criterion": "consistencia_entre_documentos", "description": "Os 3 documentos são consistentes entre si (mesmas cores, fontes, valores)." }
+      ]
+    }
+  ],
+  "handoff_rules": [
+    {
+      "from_step": "am_briefing",
+      "to_step": "brand_intel",
+      "rule": "briefing.md é a única entrada do brand intel. A skill não processa fontes brutas diretamente sem briefing.",
+      "mediator": "account-manager"
+    },
+    {
+      "from_step": "brand_intel",
+      "to_step": "brand_system_build",
+      "rule": "brand-raw.json é a entrada exclusiva do brand system builder. Os documentos finais são derivados do raw, não das fontes originais.",
+      "mediator": "account-manager"
+    }
+  ],
+  "completion_rules": {
+    "final_step_id": "brand_system_build",
+    "final_artifact": "design-tokens.json",
+    "requires_all_gates": true
+  },
+  "fallbacks": []
+}

@@ -3,17 +3,133 @@
   "version": "1.0.0",
   "task_type": "reel_script",
   "display_name": "Script de Reels",
+  "metadata": {
+    "deliverable_type": "Roteiro de Reel/TikTok",
+    "category": "social_conteudo",
+    "description": "Produz roteiro completo para Reel ou TikTok — briefing estratégico, hook validado e script com marcações de cena, legenda e CTA.",
+    "owner": "account-manager"
+  },
+  "entry_requirements": {
+    "user_inputs": [
+      "hook — gancho de abertura do vídeo",
+      "theme — tema ou assunto do vídeo",
+      "platform — Instagram Reels, TikTok ou YouTube Shorts"
+    ],
+    "required_client_context": ["dcc"],
+    "optional_client_context": ["ucm"],
+    "fallbacks": [
+      {
+        "when": "missing_ucm",
+        "action": "AM deriva personas e contexto de uso diretamente do DCC"
+      }
+    ]
+  },
+  "phases": ["planejamento", "producao_estrategica", "producao_executiva"],
   "steps": [
     {
-      "id": "reel_script_generation",
-      "title": "Roteiro de Reel/TikTok",
-      "primary_skill": "reels-script-architect",
+      "id": "am_briefing",
+      "title": "Briefing do Reel",
+      "goal": "Classificar o objetivo do reel, persona-alvo, ângulo narrativo e plataforma. Validar o hook de entrada e gerar briefing para hook_engineering.",
+      "phase": "planejamento",
+      "primary_skill": "account-manager",
       "support_skills": [],
       "input_artifacts": [],
+      "output_artifacts": ["briefing.md"],
+      "approval_gate": {
+        "required": true,
+        "type": "briefing",
+        "approve_action": "Avança para hook_engineering com briefing.md como entrada",
+        "reject_action": "AM refaz briefing com feedback do usuário",
+        "rebrief_action": "AM ajusta briefing e reapresenta"
+      },
+      "rebrief_policy": {
+        "allowed": true,
+        "mode": "rerun_step",
+        "invalidates": ["hook_engineering", "script_reels"]
+      },
+      "quality_checks": [
+        { "criterion": "objetivo_do_video", "description": "Objetivo (educar, vender, engajar, viralizar) está explícito." },
+        { "criterion": "persona_alvo", "description": "Persona que vai assistir ao vídeo está identificada." },
+        { "criterion": "angulo_narrativo", "description": "Ângulo (contrarian, dado surpresa, erro/alerta, lacuna, promessa) definido." },
+        { "criterion": "plataforma_definida", "description": "Plataforma alvo e formato (vertical, duração) especificados." }
+      ]
+    },
+    {
+      "id": "hook_engineering",
+      "title": "Engenharia de Hook",
+      "goal": "Gerar 3 a 5 variações de hook para o vídeo, otimizadas para a plataforma e persona, com base no briefing aprovado.",
+      "phase": "producao_estrategica",
+      "primary_skill": "hook-engineer",
+      "support_skills": [],
+      "input_artifacts": ["briefing.md"],
+      "output_artifacts": ["hooks.md"],
+      "approval_gate": {
+        "required": true,
+        "type": "hook",
+        "approve_action": "Hook selecionado é passado como entrada para o roteiro completo",
+        "reject_action": "Hook Engineer gera novas variações com base no feedback",
+        "rebrief_action": "Hook Engineer ajusta ângulo ou formato dos hooks indicados"
+      },
+      "rebrief_policy": {
+        "allowed": true,
+        "mode": "rerun_step",
+        "invalidates": ["script_reels"]
+      },
+      "quality_checks": [
+        { "criterion": "variedade_de_angulos", "description": "Hooks cobrem ao menos 3 ângulos diferentes." },
+        { "criterion": "especificidade", "description": "Hooks são específicos, não genéricos." },
+        { "criterion": "adequacao_a_plataforma", "description": "Hooks respeitam o padrão de abertura da plataforma definida." },
+        { "criterion": "captura_de_atencao", "description": "Cada hook para o scroll nos primeiros 3 segundos." }
+      ]
+    },
+    {
+      "id": "script_reels",
+      "title": "Roteiro Completo",
+      "goal": "Escrever o roteiro completo do Reel com hook aprovado, desenvolvimento, CTA, marcações de cena, legenda e hashtags.",
+      "phase": "producao_executiva",
+      "primary_skill": "reels-script-architect",
+      "support_skills": [],
+      "input_artifacts": ["briefing.md", "hooks.md"],
       "output_artifacts": ["roteiro.md"],
-      "approval_gate": { "required": false, "type": "output" },
-      "rebrief_policy": { "allowed": true, "mode": "rerun_step" }
+      "approval_gate": {
+        "required": true,
+        "type": "final",
+        "approve_action": "Workflow marcado como completed; roteiro disponível para download",
+        "reject_action": "Roteiro revisado com base no feedback",
+        "rebrief_action": "Arquiteto revisa seções específicas (desenvolvimento, CTA ou cenas) indicadas"
+      },
+      "rebrief_policy": {
+        "allowed": true,
+        "mode": "rerun_step",
+        "invalidates": []
+      },
+      "quality_checks": [
+        { "criterion": "hook_integrado", "description": "O hook aprovado está exatamente como nos primeiros segundos do roteiro." },
+        { "criterion": "desenvolvimento_logico", "description": "Desenvolvimento entrega a promessa do hook de forma estruturada." },
+        { "criterion": "cta_claro", "description": "CTA nos últimos 5 segundos, específico e acionável." },
+        { "criterion": "marcacoes_de_cena", "description": "Instruções de gravação presentes em cada cena." },
+        { "criterion": "legenda_completa", "description": "Legenda com copy, hashtags e CTA para a plataforma." }
+      ]
     }
   ],
+  "handoff_rules": [
+    {
+      "from_step": "am_briefing",
+      "to_step": "hook_engineering",
+      "rule": "briefing.md é a única entrada do hook engineer. O hook engineer não lê DCC diretamente.",
+      "mediator": "account-manager"
+    },
+    {
+      "from_step": "hook_engineering",
+      "to_step": "script_reels",
+      "rule": "O hook aprovado (não todos os hooks gerados) é passado como entrada para o roteiro, junto com briefing.md.",
+      "mediator": "account-manager"
+    }
+  ],
+  "completion_rules": {
+    "final_step_id": "script_reels",
+    "final_artifact": "roteiro.md",
+    "requires_all_gates": true
+  },
   "fallbacks": []
 }

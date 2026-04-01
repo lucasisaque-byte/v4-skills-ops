@@ -2,7 +2,7 @@
 Modelos de dados para o sistema de workflow stateful.
 
 Três camadas:
-  WorkflowTemplate  — definição estática (lida de JSON em disco)
+  WorkflowTemplate  — definição estática (lida de JSON em disco, validada pela gramática)
   RuntimePlan       — plano executável produzido pelo Account Manager
   WorkflowRun       — estado de execução mantido pelo engine
 """
@@ -15,24 +15,63 @@ from pydantic import BaseModel, Field
 
 class ApprovalGate(BaseModel):
     required: bool
-    type: str  # "briefing" | "copy" | "design" | "output"
+    type: str  # "briefing" | "copy" | "hook" | "calendar" | "design" | "final" | "none"
+    approve_action: str = ""
+    reject_action: str = ""
+    rebrief_action: str = ""
 
 
 class RebriefPolicy(BaseModel):
     allowed: bool
     mode: Literal["rerun_step", "restart_from_step", "restart_entire_workflow"]
     target_step_id: Optional[str] = None
+    invalidates: list[str] = []   # step_ids que voltam a pending quando este step é refeito
+
+
+class QualityCheck(BaseModel):
+    criterion: str
+    description: str = ""
 
 
 class WorkflowStepTemplate(BaseModel):
     id: str
     title: str
+    goal: str = ""
+    phase: str = ""
     primary_skill: str
     support_skills: list[str] = []
     input_artifacts: list[str] = []
     output_artifacts: list[str] = []
     approval_gate: Optional[ApprovalGate] = None
     rebrief_policy: Optional[RebriefPolicy] = None
+    quality_checks: list[QualityCheck] = []
+
+
+class WorkflowMetadata(BaseModel):
+    deliverable_type: str
+    category: str   # "aquisicao_performance" | "social_conteudo" | "marca_sistema_visual" | ...
+    description: str
+    owner: str = "account-manager"
+
+
+class EntryRequirements(BaseModel):
+    user_inputs: list[str] = []
+    required_client_context: list[str] = []
+    optional_client_context: list[str] = []
+    fallbacks: list[dict] = []
+
+
+class HandoffRule(BaseModel):
+    from_step: str
+    to_step: str
+    rule: str
+    mediator: str = "account-manager"
+
+
+class CompletionRules(BaseModel):
+    final_step_id: str
+    final_artifact: str
+    requires_all_gates: bool = True
 
 
 class WorkflowTemplate(BaseModel):
@@ -40,7 +79,12 @@ class WorkflowTemplate(BaseModel):
     version: str
     task_type: str
     display_name: str
+    metadata: Optional[WorkflowMetadata] = None
+    entry_requirements: Optional[EntryRequirements] = None
+    phases: list[str] = []
     steps: list[WorkflowStepTemplate]
+    handoff_rules: list[HandoffRule] = []
+    completion_rules: Optional[CompletionRules] = None
     fallbacks: list[dict] = []
 
 
@@ -129,8 +173,8 @@ class WorkflowRun(BaseModel):
 
 class CreateWorkflowRunRequest(BaseModel):
     client_id: str
-    task_type: str           # "hooks" | "copy_lp" | "calendar" | "ads" | "reel_script" | "landing_page"
-    input: dict = {}         # inputs livres (theme, platform, campaign_description, etc.)
+    task_type: str
+    input: dict = {}
 
 
 class ApproveStepRequest(BaseModel):

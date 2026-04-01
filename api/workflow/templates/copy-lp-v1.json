@@ -3,17 +3,102 @@
   "version": "1.0.0",
   "task_type": "copy_lp",
   "display_name": "Copy de Landing Page",
+  "metadata": {
+    "deliverable_type": "Copy de Landing Page",
+    "category": "aquisicao_performance",
+    "description": "Produz copy completa de landing page — briefing estratégico e copy estruturada por seção (Hero, Problema, Solução, Benefícios, Prova Social, FAQ, CTA).",
+    "owner": "account-manager"
+  },
+  "entry_requirements": {
+    "user_inputs": [
+      "campaign_description (opcional) — oferta ou campanha específica",
+      "persona_focus (opcional) — principal, secundária ou todas",
+      "output_format — structured ou html"
+    ],
+    "required_client_context": ["dcc", "ucm"],
+    "optional_client_context": ["brand.identity"],
+    "fallbacks": [
+      {
+        "when": "missing_ucm",
+        "action": "AM constrói use case map sintético a partir do DCC antes de briefar a copy"
+      }
+    ]
+  },
+  "phases": ["planejamento", "producao_estrategica"],
   "steps": [
     {
-      "id": "copy_lp",
-      "title": "Copy completa da landing page",
-      "primary_skill": "copywriting",
+      "id": "am_briefing",
+      "title": "Briefing Estratégico",
+      "goal": "Ler DCC + UCM + inputs do usuário, definir estrutura da LP, persona focal e promessa central. Gerar briefing executável para copy.",
+      "phase": "planejamento",
+      "primary_skill": "account-manager",
       "support_skills": [],
       "input_artifacts": [],
+      "output_artifacts": ["briefing.md"],
+      "approval_gate": {
+        "required": true,
+        "type": "briefing",
+        "approve_action": "Avança para copy_lp com briefing.md como entrada",
+        "reject_action": "AM refaz briefing com feedback do usuário",
+        "rebrief_action": "AM ajusta briefing e reapresenta"
+      },
+      "rebrief_policy": {
+        "allowed": true,
+        "mode": "rerun_step",
+        "invalidates": ["copy_lp"]
+      },
+      "quality_checks": [
+        { "criterion": "objetivo_da_lp", "description": "Objetivo da LP (geração de leads, venda direta) está explícito." },
+        { "criterion": "persona_e_dor", "description": "Persona focal com dores e desejos mapeados do UCM." },
+        { "criterion": "proposta_de_valor", "description": "Mecanismo único de valor articulado em uma frase." },
+        { "criterion": "estrutura_de_secoes", "description": "Seções da LP definidas em ordem (Hero, Problema, etc.)." },
+        { "criterion": "objecoes_mapeadas", "description": "Principais objeções do ICP identificadas para tratamento na copy." }
+      ]
+    },
+    {
+      "id": "copy_lp",
+      "title": "Copy da Landing Page",
+      "goal": "Escrever a copy completa da LP por seção com base no briefing aprovado — Hero, Problema, Solução, Benefícios, Prova Social, FAQ e CTA.",
+      "phase": "producao_estrategica",
+      "primary_skill": "copywriting",
+      "support_skills": [],
+      "input_artifacts": ["briefing.md"],
       "output_artifacts": ["landing-page-copy.md"],
-      "approval_gate": { "required": false, "type": "copy" },
-      "rebrief_policy": { "allowed": true, "mode": "rerun_step" }
+      "approval_gate": {
+        "required": true,
+        "type": "copy",
+        "approve_action": "Workflow marcado como completed; copy disponível para download",
+        "reject_action": "Copy volta para revisão com feedback estruturado do usuário",
+        "rebrief_action": "Copywriter revisa seções específicas indicadas e reapresenta"
+      },
+      "rebrief_policy": {
+        "allowed": true,
+        "mode": "rerun_step",
+        "invalidates": []
+      },
+      "quality_checks": [
+        { "criterion": "clareza", "description": "Linguagem direta, sem jargão, compreensível para o ICP." },
+        { "criterion": "especificidade", "description": "Dados concretos, números e exemplos reais." },
+        { "criterion": "aderencia_ao_icp", "description": "Dores e desejos do ICP refletidos em toda a copy." },
+        { "criterion": "forca_de_promessa", "description": "Promessa principal crível, desejável e diferenciada." },
+        { "criterion": "prova_social", "description": "Evidências, depoimentos ou resultados presentes." },
+        { "criterion": "tratamento_de_objecoes", "description": "Objeções mapeadas no briefing endereçadas na copy." },
+        { "criterion": "cta", "description": "CTAs claros, específicos e repetidos nas seções estratégicas." }
+      ]
     }
   ],
+  "handoff_rules": [
+    {
+      "from_step": "am_briefing",
+      "to_step": "copy_lp",
+      "rule": "briefing.md é a única entrada da copy. A copy não lê DCC/UCM diretamente; o briefing já sintetiza o contexto necessário.",
+      "mediator": "account-manager"
+    }
+  ],
+  "completion_rules": {
+    "final_step_id": "copy_lp",
+    "final_artifact": "landing-page-copy.md",
+    "requires_all_gates": true
+  },
   "fallbacks": []
 }

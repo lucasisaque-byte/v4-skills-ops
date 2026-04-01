@@ -3,17 +3,188 @@
   "version": "1.0.0",
   "task_type": "calendar",
   "display_name": "Calendário Editorial",
+  "metadata": {
+    "deliverable_type": "Calendário Editorial Mensal",
+    "category": "social_conteudo",
+    "description": "Produz um calendário editorial mensal completo — diagnóstico editorial, definição de pilares, calendário estruturado e briefs por peça para produção.",
+    "owner": "account-manager"
+  },
+  "entry_requirements": {
+    "user_inputs": [
+      "month — mês e ano de referência",
+      "frequency — 3x/semana, 5x/semana ou diário",
+      "platforms — Instagram, LinkedIn, TikTok",
+      "monthly_objective (opcional) — objetivo do mês",
+      "pillar_mode — auto ou manual",
+      "custom_pillars (opcional) — pilares definidos manualmente"
+    ],
+    "required_client_context": ["dcc"],
+    "optional_client_context": ["ucm", "brand.identity"],
+    "fallbacks": [
+      {
+        "when": "missing_ucm",
+        "action": "AM deriva personas e jornada diretamente do DCC"
+      }
+    ]
+  },
+  "phases": ["planejamento", "diagnostico", "producao_estrategica", "aprovacao", "producao_executiva"],
   "steps": [
     {
-      "id": "calendar_generation",
-      "title": "Calendário editorial mensal",
-      "primary_skill": "editorial-calendar-builder",
+      "id": "am_briefing",
+      "title": "Briefing Editorial",
+      "goal": "Ler DCC + inputs do usuário, definir objetivo do mês, plataformas e modo de pilares. Gerar briefing para diagnóstico editorial.",
+      "phase": "planejamento",
+      "primary_skill": "account-manager",
       "support_skills": [],
       "input_artifacts": [],
+      "output_artifacts": ["briefing.md"],
+      "approval_gate": {
+        "required": true,
+        "type": "briefing",
+        "approve_action": "Avança para diagnostico_editorial",
+        "reject_action": "AM refaz briefing com feedback do usuário",
+        "rebrief_action": "AM ajusta briefing e reapresenta"
+      },
+      "rebrief_policy": {
+        "allowed": true,
+        "mode": "rerun_step",
+        "invalidates": ["diagnostico_editorial", "editorial_calendar", "geracao_peca_a_peca", "brief_design_por_peca"]
+      },
+      "quality_checks": [
+        { "criterion": "objetivo_do_mes_claro", "description": "Objetivo do mês definido (ex: lançamento, crescimento, engajamento)." },
+        { "criterion": "plataformas_e_frequencia", "description": "Plataformas e frequência semanal especificadas." },
+        { "criterion": "perfil_do_publico", "description": "ICP e persona principal identificados para este mês." },
+        { "criterion": "restricoes_mapeadas", "description": "Datas comemorativas, eventos do cliente ou restrições de pauta mapeados." }
+      ]
+    },
+    {
+      "id": "diagnostico_editorial",
+      "title": "Diagnóstico e Pilares Editoriais",
+      "goal": "Analisar posicionamento do cliente, definir pilares editoriais e recomendar mix de formatos para o período.",
+      "phase": "diagnostico",
+      "primary_skill": "social-media-briefing-diagnostic",
+      "support_skills": ["editorial-pillar-planner"],
+      "input_artifacts": ["briefing.md"],
+      "output_artifacts": ["diagnostico-editorial.md"],
+      "approval_gate": {
+        "required": false,
+        "type": "none",
+        "approve_action": "Avança automaticamente para editorial_calendar",
+        "reject_action": "N/A",
+        "rebrief_action": "N/A"
+      },
+      "rebrief_policy": {
+        "allowed": false,
+        "mode": "rerun_step",
+        "invalidates": ["editorial_calendar", "geracao_peca_a_peca", "brief_design_por_peca"]
+      },
+      "quality_checks": [
+        { "criterion": "pilares_definidos", "description": "Mínimo 3 pilares editoriais com nome e descrição." },
+        { "criterion": "mix_de_formatos", "description": "Distribuição entre carrossel, reels, estático e stories definida." },
+        { "criterion": "alinhamento_com_objetivo", "description": "Pilares estão alinhados ao objetivo do mês definido no briefing." }
+      ]
+    },
+    {
+      "id": "editorial_calendar",
+      "title": "Construção do Calendário",
+      "goal": "Gerar o calendário mensal completo — data, dia, pilar, formato, hook, plataforma e status para cada publicação do período.",
+      "phase": "producao_estrategica",
+      "primary_skill": "editorial-calendar-builder",
+      "support_skills": [],
+      "input_artifacts": ["briefing.md", "diagnostico-editorial.md"],
       "output_artifacts": ["calendario.md"],
-      "approval_gate": { "required": false, "type": "output" },
-      "rebrief_policy": { "allowed": true, "mode": "rerun_step" }
+      "approval_gate": {
+        "required": true,
+        "type": "calendar",
+        "approve_action": "AM quebra calendário em briefs por peça para produção",
+        "reject_action": "Calendário volta para revisão com feedback do usuário",
+        "rebrief_action": "Builder revisa datas, pilares ou hooks específicos indicados"
+      },
+      "rebrief_policy": {
+        "allowed": true,
+        "mode": "rerun_step",
+        "invalidates": ["geracao_peca_a_peca", "brief_design_por_peca"]
+      },
+      "quality_checks": [
+        { "criterion": "coerencia_entre_pilares", "description": "Cada publicação está associada a um pilar definido no diagnóstico." },
+        { "criterion": "equilibrio_funil", "description": "Mix balanceado entre topo, meio e fundo de funil." },
+        { "criterion": "aderencia_ao_objetivo", "description": "Calendário reflete o objetivo do mês definido no briefing." },
+        { "criterion": "variedade_de_formatos", "description": "Formatos variados conforme mix definido no diagnóstico." },
+        { "criterion": "densidade_de_hooks", "description": "Cada publicação tem um hook identificado e diferenciado." }
+      ]
+    },
+    {
+      "id": "geracao_peca_a_peca",
+      "title": "Briefs por Peça",
+      "goal": "AM quebra o calendário aprovado em briefs individuais executáveis por peça — cada brief contém hook, copy, formato e instruções para design.",
+      "phase": "aprovacao",
+      "primary_skill": "account-manager",
+      "support_skills": [],
+      "input_artifacts": ["calendario.md"],
+      "output_artifacts": ["briefs-por-peca.md"],
+      "approval_gate": {
+        "required": true,
+        "type": "copy",
+        "approve_action": "Avança para brief_design_por_peca",
+        "reject_action": "AM revisa briefs específicos indicados no feedback",
+        "rebrief_action": "AM refaz briefs das peças indicadas"
+      },
+      "rebrief_policy": {
+        "allowed": true,
+        "mode": "rerun_step",
+        "invalidates": ["brief_design_por_peca"]
+      },
+      "quality_checks": [
+        { "criterion": "brief_por_peca_completo", "description": "Cada peça do calendário tem hook, copy resumida e instrução de formato." },
+        { "criterion": "consistencia_com_calendario", "description": "Briefs são fiéis ao calendário aprovado (pilar, data, formato)." }
+      ]
+    },
+    {
+      "id": "brief_design_por_peca",
+      "title": "Brief de Design por Peça",
+      "goal": "Gerar brief visual para cada peça aprovada — estrutura, hierarquia, elementos gráficos e aplicação de brand system por formato.",
+      "phase": "producao_executiva",
+      "primary_skill": "creative-brief-for-design",
+      "support_skills": [],
+      "input_artifacts": ["briefs-por-peca.md"],
+      "output_artifacts": ["briefs-design.md"],
+      "approval_gate": {
+        "required": true,
+        "type": "design",
+        "approve_action": "Workflow marcado como completed; pacote completo disponível para download",
+        "reject_action": "Briefs de design revisados com base no feedback",
+        "rebrief_action": "Designer revisa briefs das peças indicadas"
+      },
+      "rebrief_policy": {
+        "allowed": true,
+        "mode": "rerun_step",
+        "invalidates": []
+      },
+      "quality_checks": [
+        { "criterion": "estrutura_visual_definida", "description": "Cada peça tem estrutura visual (slide a slide para carrossel, cenas para reels)." },
+        { "criterion": "brand_system_aplicado", "description": "Cores, fontes e estilo visual do cliente especificados por peça." },
+        { "criterion": "instrucoes_executaveis", "description": "Briefs são acionáveis por um designer sem necessidade de clarificação." }
+      ]
     }
   ],
+  "handoff_rules": [
+    {
+      "from_step": "am_briefing",
+      "to_step": "diagnostico_editorial",
+      "rule": "briefing.md é a única entrada do diagnóstico. A skill não lê DCC diretamente.",
+      "mediator": "account-manager"
+    },
+    {
+      "from_step": "editorial_calendar",
+      "to_step": "brief_design_por_peca",
+      "rule": "Calendário aprovado não vai diretamente para design. O AM quebra em briefs por peça antes, mantendo rastreabilidade calendário → peça → design.",
+      "mediator": "account-manager"
+    }
+  ],
+  "completion_rules": {
+    "final_step_id": "brief_design_por_peca",
+    "final_artifact": "briefs-design.md",
+    "requires_all_gates": true
+  },
   "fallbacks": []
 }

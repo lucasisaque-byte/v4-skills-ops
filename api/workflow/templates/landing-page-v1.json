@@ -3,50 +3,226 @@
   "version": "1.0.0",
   "task_type": "landing_page",
   "display_name": "Landing Page Completa",
+
+  "metadata": {
+    "deliverable_type": "Landing Page",
+    "category": "aquisicao_performance",
+    "description": "Produz uma landing page completa com briefing estratégico, copy estruturada e layout visual, cada etapa com gate de aprovação humana.",
+    "owner": "account-manager"
+  },
+
+  "entry_requirements": {
+    "user_inputs": [
+      "campaign_description (opcional) — oferta ou campanha específica",
+      "persona_focus (opcional) — principal, secundária ou todas",
+      "output_format — structured ou html"
+    ],
+    "required_client_context": ["dcc", "ucm"],
+    "optional_client_context": ["brand.identity", "brand.design_system", "brand.tokens"],
+    "fallbacks": [
+      {
+        "when": "missing_ucm",
+        "action": "AM constrói use case map sintético a partir do DCC antes de iniciar copy"
+      },
+      {
+        "when": "missing_brand_context",
+        "action": "Design avança com paleta e tipografia derivadas do DCC, flagging risco visual"
+      }
+    ]
+  },
+
+  "phases": [
+    "planejamento",
+    "producao_estrategica",
+    "handoff",
+    "producao_executiva",
+    "consolidacao_final"
+  ],
+
   "steps": [
     {
       "id": "am_briefing",
-      "title": "Briefing estratégico",
+      "title": "Briefing Estratégico",
+      "goal": "Ler DCC + UCM + inputs do usuário, classificar o entregável, definir o pipeline e gerar briefing executável para a etapa de copy.",
+      "phase": "planejamento",
       "primary_skill": "account-manager",
       "support_skills": [],
       "input_artifacts": [],
       "output_artifacts": ["briefing.md"],
-      "approval_gate": { "required": true, "type": "briefing" },
-      "rebrief_policy": { "allowed": true, "mode": "rerun_step" }
+      "approval_gate": {
+        "required": true,
+        "type": "briefing",
+        "approve_action": "Avança para copy_lp com briefing.md como entrada",
+        "reject_action": "Workflow volta para am_briefing com feedback do usuário",
+        "rebrief_action": "AM revisa briefing incorporando o feedback e reapresenta para aprovação"
+      },
+      "rebrief_policy": {
+        "allowed": true,
+        "mode": "rerun_step",
+        "invalidates": ["copy_lp", "brief_design_lp", "design_lp", "final_review"]
+      },
+      "quality_checks": [
+        { "criterion": "clareza_do_objetivo", "description": "O objetivo da LP está explicitamente definido (geração de leads, venda direta, etc.)." },
+        { "criterion": "persona_identificada", "description": "A persona principal está nomeada com dores e desejos mapeados." },
+        { "criterion": "proposta_de_valor_clara", "description": "O mecanismo único de valor está articulado em uma frase." },
+        { "criterion": "tom_definido", "description": "Tom de voz e palavras-chave do cliente estão especificados." },
+        { "criterion": "objecoes_mapeadas", "description": "As 3 principais objeções do ICP estão listadas com respostas sugeridas." },
+        { "criterion": "estrutura_de_secoes", "description": "A estrutura de seções da LP (Hero, Problema, Solução, etc.) está definida." }
+      ]
     },
+
     {
       "id": "copy_lp",
-      "title": "Copy da landing page",
+      "title": "Copy da Landing Page",
+      "goal": "Escrever a copy completa da LP com base no briefing aprovado — Hero, Problema, Solução, Benefícios, Prova Social, FAQ e CTA.",
+      "phase": "producao_estrategica",
       "primary_skill": "copywriting",
       "support_skills": [],
       "input_artifacts": ["briefing.md"],
       "output_artifacts": ["landing-page-copy.md"],
-      "approval_gate": { "required": true, "type": "copy" },
+      "approval_gate": {
+        "required": true,
+        "type": "copy",
+        "approve_action": "AM recebe copy aprovada e gera brief de design para a próxima etapa",
+        "reject_action": "Copy volta para revisão com feedback estruturado do usuário",
+        "rebrief_action": "Copywriter revisa seções específicas indicadas no feedback e reapresenta"
+      },
       "rebrief_policy": {
         "allowed": true,
-        "mode": "restart_from_step",
-        "target_step_id": "am_briefing"
-      }
+        "mode": "rerun_step",
+        "invalidates": ["brief_design_lp", "design_lp", "final_review"]
+      },
+      "quality_checks": [
+        { "criterion": "clareza", "description": "Linguagem direta, sem jargão desnecessário, compreensível para o ICP." },
+        { "criterion": "especificidade", "description": "Dados concretos, números e exemplos reais, sem afirmações vagas." },
+        { "criterion": "aderencia_ao_icp", "description": "Dores, linguagem e desejos do ICP estão refletidos em toda a copy." },
+        { "criterion": "forca_de_promessa", "description": "A promessa principal é crível, desejável e diferenciada." },
+        { "criterion": "prova_social", "description": "Evidências, depoimentos ou resultados estão presentes." },
+        { "criterion": "tratamento_de_objecoes", "description": "As objeções mapeadas no briefing estão endereçadas na copy." },
+        { "criterion": "cta", "description": "CTAs claros, específicos e repetidos nas seções estratégicas." }
+      ]
     },
+
+    {
+      "id": "brief_design_lp",
+      "title": "Brief de Design da LP",
+      "goal": "AM transforma a copy aprovada em briefing executável para o designer — especificando layout, hierarquia visual, componentes e uso do brand system.",
+      "phase": "handoff",
+      "primary_skill": "account-manager",
+      "support_skills": [],
+      "input_artifacts": ["landing-page-copy.md"],
+      "output_artifacts": ["design-brief.md"],
+      "approval_gate": {
+        "required": false,
+        "type": "none",
+        "approve_action": "Avança automaticamente para design_lp",
+        "reject_action": "N/A — step interno de handoff",
+        "rebrief_action": "N/A — step interno de handoff"
+      },
+      "rebrief_policy": {
+        "allowed": false,
+        "mode": "rerun_step",
+        "invalidates": ["design_lp", "final_review"]
+      },
+      "quality_checks": [
+        { "criterion": "hierarquia_visual_definida", "description": "Ordem de leitura e destaque de elementos está especificada." },
+        { "criterion": "componentes_mapeados", "description": "Cada seção da copy tem um componente visual correspondente definido." },
+        { "criterion": "brand_system_referenciado", "description": "Cores, tipografia e tokens do cliente estão explicitamente referenciados." }
+      ]
+    },
+
     {
       "id": "design_lp",
-      "title": "Layout / estrutura visual",
+      "title": "Layout Visual da LP",
+      "goal": "Construir o layout HTML/CSS da LP aplicando o brand system do cliente sobre a copy aprovada e o brief de design.",
+      "phase": "producao_executiva",
       "primary_skill": "social-media-designer",
       "support_skills": ["brand-system-builder"],
-      "input_artifacts": ["landing-page-copy.md"],
-      "output_artifacts": ["landing-page-design.html"],
-      "approval_gate": { "required": true, "type": "design" },
+      "input_artifacts": ["landing-page-copy.md", "design-brief.md"],
+      "output_artifacts": ["landing-page.html"],
+      "approval_gate": {
+        "required": true,
+        "type": "design",
+        "approve_action": "AM realiza revisão final e consolida entregável",
+        "reject_action": "Design volta para revisão; se problema for na copy, copy_lp é reinvalidada",
+        "rebrief_action": "Designer revisa componentes ou seções específicas indicadas no feedback"
+      },
+      "rebrief_policy": {
+        "allowed": true,
+        "mode": "rerun_step",
+        "invalidates": ["final_review"]
+      },
+      "quality_checks": [
+        { "criterion": "aderencia_a_marca", "description": "Paleta, tipografia e tokens do cliente aplicados corretamente." },
+        { "criterion": "legibilidade", "description": "Tamanho de fonte, contraste e espaçamento adequados para leitura." },
+        { "criterion": "hierarquia_visual", "description": "Headline > subheadline > body > CTA em hierarquia clara." },
+        { "criterion": "contraste", "description": "Contraste de cores atende WCAG AA no mínimo." },
+        { "criterion": "adequacao_ao_formato", "description": "Layout responsivo e estrutura adequada para web." },
+        { "criterion": "fidelidade_ao_briefing", "description": "Todos os elementos do design-brief.md estão implementados." }
+      ]
+    },
+
+    {
+      "id": "final_review",
+      "title": "Revisão Final e Consolidação",
+      "goal": "AM revisa a coerência entre briefing, copy e design, valida critérios de qualidade e consolida o pacote final de entregáveis.",
+      "phase": "consolidacao_final",
+      "primary_skill": "account-manager",
+      "support_skills": [],
+      "input_artifacts": ["briefing.md", "landing-page-copy.md", "design-brief.md", "landing-page.html"],
+      "output_artifacts": ["landing-page-package.md"],
+      "approval_gate": {
+        "required": true,
+        "type": "final",
+        "approve_action": "Workflow marcado como completed; artefatos disponíveis para download",
+        "reject_action": "AM indica qual etapa deve ser refeita com base no feedback",
+        "rebrief_action": "AM decide ponto de retorno e invalida steps necessários"
+      },
       "rebrief_policy": {
         "allowed": true,
         "mode": "restart_from_step",
-        "target_step_id": "copy_lp"
-      }
+        "target_step_id": "copy_lp",
+        "invalidates": ["brief_design_lp", "design_lp", "final_review"]
+      },
+      "quality_checks": [
+        { "criterion": "coerencia_briefing_copy", "description": "Copy está alinhada com todos os pontos do briefing aprovado." },
+        { "criterion": "coerencia_copy_design", "description": "Todos os elementos de copy estão presentes e legíveis no design." },
+        { "criterion": "pacote_completo", "description": "Todos os artefatos esperados foram gerados e estão consistentes." }
+      ]
     }
   ],
+
+  "handoff_rules": [
+    {
+      "from_step": "am_briefing",
+      "to_step": "copy_lp",
+      "rule": "briefing.md aprovado é a única entrada da copy. A copy não deve reler DCC/UCM diretamente; o briefing já sintetiza o contexto necessário.",
+      "mediator": "account-manager"
+    },
+    {
+      "from_step": "copy_lp",
+      "to_step": "design_lp",
+      "rule": "Copy aprovada não vai diretamente para o designer. O AM executa brief_design_lp primeiro, transformando a copy em instruções visuais explícitas.",
+      "mediator": "account-manager"
+    },
+    {
+      "from_step": "design_lp",
+      "to_step": "final_review",
+      "rule": "Design aprovado vai para revisão final do AM junto com todos os artefatos anteriores para validação de coerência.",
+      "mediator": "account-manager"
+    }
+  ],
+
+  "completion_rules": {
+    "final_step_id": "final_review",
+    "final_artifact": "landing-page-package.md",
+    "requires_all_gates": true
+  },
+
   "fallbacks": [
     {
-      "when": "missing_brand_context",
-      "action": "continue_with_copy_only_and_flag_design_risk"
+      "when": "design_rejected_due_to_copy_issue",
+      "action": "Invalidar copy_lp, brief_design_lp e design_lp; retornar para copy_lp com feedback do designer"
     }
   ]
 }

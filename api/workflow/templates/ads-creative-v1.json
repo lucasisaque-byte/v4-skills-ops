@@ -3,17 +3,164 @@
   "version": "1.0.0",
   "task_type": "ads",
   "display_name": "Criativo de Ads",
+  "metadata": {
+    "deliverable_type": "Criativo de Anúncio",
+    "category": "aquisicao_performance",
+    "description": "Produz um criativo de anúncio completo para Meta/Google/LinkedIn — briefing estratégico, copy de ads e execução visual com brand system aplicado.",
+    "owner": "account-manager"
+  },
+  "entry_requirements": {
+    "user_inputs": [
+      "campaign_objective — leads, awareness ou conversion",
+      "platform — meta-feed, meta-stories, google, linkedin",
+      "offer_description — oferta ou produto a destacar",
+      "tone — urgencia, educacional, emocional, prova"
+    ],
+    "required_client_context": ["dcc"],
+    "optional_client_context": ["ucm", "brand.identity", "brand.tokens"],
+    "fallbacks": [
+      {
+        "when": "missing_brand_context",
+        "action": "Designer usa paleta derivada do DCC e flag risco de fidelidade de marca"
+      }
+    ]
+  },
+  "phases": ["planejamento", "producao_estrategica", "handoff", "producao_executiva"],
   "steps": [
     {
-      "id": "ads_generation",
-      "title": "Criativo de anúncio",
-      "primary_skill": "social-media-designer",
+      "id": "am_briefing",
+      "title": "Briefing do Criativo",
+      "goal": "Classificar o objetivo do criativo, identificar persona, promessa central, formato e tom. Gerar briefing executável para a copy de ads.",
+      "phase": "planejamento",
+      "primary_skill": "account-manager",
       "support_skills": [],
       "input_artifacts": [],
-      "output_artifacts": ["ads-creative.md"],
-      "approval_gate": { "required": false, "type": "output" },
-      "rebrief_policy": { "allowed": true, "mode": "rerun_step" }
+      "output_artifacts": ["briefing.md"],
+      "approval_gate": {
+        "required": true,
+        "type": "briefing",
+        "approve_action": "Avança para copy_ads com briefing.md como entrada",
+        "reject_action": "AM refaz briefing incorporando feedback do usuário",
+        "rebrief_action": "AM ajusta briefing nos pontos indicados e reapresenta"
+      },
+      "rebrief_policy": {
+        "allowed": true,
+        "mode": "rerun_step",
+        "invalidates": ["copy_ads", "brief_criativo", "execucao_visual_ads"]
+      },
+      "quality_checks": [
+        { "criterion": "objetivo_definido", "description": "Objetivo de campanha está explícito." },
+        { "criterion": "persona_e_dor", "description": "Persona-alvo com dor ou desejo principal identificado." },
+        { "criterion": "promessa_central", "description": "Promessa principal definida em uma frase." },
+        { "criterion": "formato_e_dimensoes", "description": "Plataforma, formato e dimensões especificados." },
+        { "criterion": "tom_e_angulo", "description": "Tom e ângulo criativo definidos." }
+      ]
+    },
+    {
+      "id": "copy_ads",
+      "title": "Copy do Anúncio",
+      "goal": "Escrever hook, headline, texto de corpo e CTA para o criativo com base no briefing aprovado.",
+      "phase": "producao_estrategica",
+      "primary_skill": "copywriting",
+      "support_skills": ["hook-engineer"],
+      "input_artifacts": ["briefing.md"],
+      "output_artifacts": ["ads-copy.md"],
+      "approval_gate": {
+        "required": true,
+        "type": "copy",
+        "approve_action": "AM gera brief criativo transformando a copy em instruções para o designer",
+        "reject_action": "Copy volta para revisão com feedback do usuário",
+        "rebrief_action": "Copywriter revisa elementos específicos (hook, headline ou CTA) indicados"
+      },
+      "rebrief_policy": {
+        "allowed": true,
+        "mode": "rerun_step",
+        "invalidates": ["brief_criativo", "execucao_visual_ads"]
+      },
+      "quality_checks": [
+        { "criterion": "hook_forte", "description": "Hook capta atenção nos 3 primeiros segundos / primeira linha." },
+        { "criterion": "headline_especifica", "description": "Headline comunica benefício concreto, não vago." },
+        { "criterion": "cta_claro", "description": "CTA diz exatamente o que fazer e o que acontece." },
+        { "criterion": "aderencia_ao_objetivo", "description": "Copy alinhada ao objetivo de campanha." },
+        { "criterion": "aderencia_ao_tom", "description": "Tom definido no briefing está presente em todo o texto." }
+      ]
+    },
+    {
+      "id": "brief_criativo",
+      "title": "Brief Criativo para Design",
+      "goal": "AM transforma a copy aprovada em brief visual — composição, hierarquia, elementos gráficos e uso do brand system para o formato definido.",
+      "phase": "handoff",
+      "primary_skill": "account-manager",
+      "support_skills": ["creative-brief-for-design"],
+      "input_artifacts": ["briefing.md", "ads-copy.md"],
+      "output_artifacts": ["creative-brief.md"],
+      "approval_gate": {
+        "required": false,
+        "type": "none",
+        "approve_action": "Avança automaticamente para execucao_visual_ads",
+        "reject_action": "N/A — step interno de handoff",
+        "rebrief_action": "N/A — step interno de handoff"
+      },
+      "rebrief_policy": {
+        "allowed": false,
+        "mode": "rerun_step",
+        "invalidates": ["execucao_visual_ads"]
+      },
+      "quality_checks": [
+        { "criterion": "composicao_especificada", "description": "Posicionamento de texto, imagem e elementos definidos para o formato." },
+        { "criterion": "brand_tokens_referenciados", "description": "Cores, fontes e estilos explicitamente referenciados." },
+        { "criterion": "hierarquia_de_copy", "description": "Tamanho e peso visual de cada elemento especificados." }
+      ]
+    },
+    {
+      "id": "execucao_visual_ads",
+      "title": "Execução Visual do Criativo",
+      "goal": "Produzir o HTML/CSS do criativo aplicando brand system, copy aprovada e brief criativo para o formato e plataforma definidos.",
+      "phase": "producao_executiva",
+      "primary_skill": "social-media-designer",
+      "support_skills": [],
+      "input_artifacts": ["ads-copy.md", "creative-brief.md"],
+      "output_artifacts": ["ads-creative.html"],
+      "approval_gate": {
+        "required": true,
+        "type": "design",
+        "approve_action": "Workflow marcado como completed; criativo disponível para download",
+        "reject_action": "Designer refaz; se problema for na copy, copy_ads é reinvalidada",
+        "rebrief_action": "Designer ajusta elementos visuais específicos indicados"
+      },
+      "rebrief_policy": {
+        "allowed": true,
+        "mode": "rerun_step",
+        "invalidates": []
+      },
+      "quality_checks": [
+        { "criterion": "aderencia_a_marca", "description": "Paleta, tipografia e tokens do cliente aplicados." },
+        { "criterion": "legibilidade", "description": "Texto legível no tamanho do formato final." },
+        { "criterion": "hierarquia_visual", "description": "Hook > Headline > CTA em hierarquia visual clara." },
+        { "criterion": "contraste", "description": "Contraste adequado entre texto e fundo." },
+        { "criterion": "adequacao_ao_formato", "description": "Dimensões corretas para a plataforma definida." },
+        { "criterion": "fidelidade_ao_brief", "description": "Todos os elementos do creative-brief.md implementados." }
+      ]
     }
   ],
+  "handoff_rules": [
+    {
+      "from_step": "am_briefing",
+      "to_step": "copy_ads",
+      "rule": "briefing.md é a única entrada da copy. A copy não lê DCC diretamente.",
+      "mediator": "account-manager"
+    },
+    {
+      "from_step": "copy_ads",
+      "to_step": "execucao_visual_ads",
+      "rule": "Copy aprovada não vai diretamente para o designer. O AM produz brief_criativo especificando composição e uso do brand system.",
+      "mediator": "account-manager"
+    }
+  ],
+  "completion_rules": {
+    "final_step_id": "execucao_visual_ads",
+    "final_artifact": "ads-creative.html",
+    "requires_all_gates": true
+  },
   "fallbacks": []
 }

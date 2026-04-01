@@ -1,0 +1,317 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "v4-workflow-template-grammar-v1",
+  "title": "V4 Workflow Template Grammar",
+  "description": "Gramática universal que define a estrutura obrigatória de todo template de workflow da plataforma V4 Skills Ops. Todo template deve passar neste schema antes de ser carregado pelo registry.",
+  "type": "object",
+  "required": [
+    "template_id",
+    "version",
+    "task_type",
+    "display_name",
+    "metadata",
+    "entry_requirements",
+    "phases",
+    "steps",
+    "handoff_rules",
+    "completion_rules"
+  ],
+  "additionalProperties": false,
+  "properties": {
+
+    "template_id": {
+      "type": "string",
+      "description": "Identificador único do template. Formato: {slug}-v{n}. Ex: landing-page-v1.",
+      "pattern": "^[a-z0-9-]+-v[0-9]+$"
+    },
+
+    "version": {
+      "type": "string",
+      "description": "Versão semântica do template. Ex: 1.0.0.",
+      "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$"
+    },
+
+    "task_type": {
+      "type": "string",
+      "description": "Chave interna usada pelo backend para mapear task_type → template. Deve existir em TASK_TYPE_DEFAULTS.",
+      "enum": [
+        "landing_page",
+        "ads",
+        "copy_lp",
+        "hooks",
+        "calendar",
+        "reel_script",
+        "brand_system",
+        "carousel",
+        "post_avulso",
+        "stories",
+        "brand_intel",
+        "diagnostico_social",
+        "diagnostico_performance",
+        "diagnostico_crm"
+      ]
+    },
+
+    "display_name": {
+      "type": "string",
+      "description": "Nome legível exibido na UI. Ex: Landing Page Completa."
+    },
+
+    "metadata": {
+      "type": "object",
+      "description": "Identidade e classificação do workflow.",
+      "required": ["deliverable_type", "category", "description", "owner"],
+      "additionalProperties": false,
+      "properties": {
+        "deliverable_type": {
+          "type": "string",
+          "description": "Nome do entregável final. Ex: Landing Page, Criativo de Ads."
+        },
+        "category": {
+          "type": "string",
+          "description": "Categoria de produto à qual este entregável pertence.",
+          "enum": [
+            "aquisicao_performance",
+            "social_conteudo",
+            "marca_sistema_visual",
+            "crm_jornada_mensagem",
+            "diagnostico_estrategia_auditoria"
+          ]
+        },
+        "description": {
+          "type": "string",
+          "description": "Descrição em uma frase do que este workflow produz e como."
+        },
+        "owner": {
+          "type": "string",
+          "description": "Skill responsável pela governança do workflow. Sempre account-manager.",
+          "const": "account-manager"
+        }
+      }
+    },
+
+    "entry_requirements": {
+      "type": "object",
+      "description": "Pré-condições para que o workflow possa ser iniciado.",
+      "required": ["user_inputs", "required_client_context", "optional_client_context", "fallbacks"],
+      "additionalProperties": false,
+      "properties": {
+        "user_inputs": {
+          "type": "array",
+          "description": "Inputs que o usuário deve fornecer via UI antes de iniciar.",
+          "items": { "type": "string" }
+        },
+        "required_client_context": {
+          "type": "array",
+          "description": "Documentos do cliente que são obrigatórios. Ex: dcc, ucm.",
+          "items": {
+            "type": "string",
+            "enum": ["dcc", "ucm", "brand.identity", "brand.design_system", "brand.tokens", "brand.raw"]
+          }
+        },
+        "optional_client_context": {
+          "type": "array",
+          "description": "Documentos do cliente que enriquecem mas não bloqueiam o workflow.",
+          "items": { "type": "string" }
+        },
+        "fallbacks": {
+          "type": "array",
+          "description": "Ações alternativas quando um contexto obrigatório está ausente.",
+          "items": {
+            "type": "object",
+            "required": ["when", "action"],
+            "properties": {
+              "when": { "type": "string" },
+              "action": { "type": "string" }
+            }
+          }
+        }
+      }
+    },
+
+    "phases": {
+      "type": "array",
+      "description": "Fases de negócio do workflow, em ordem. Cada step deve referenciar uma fase.",
+      "minItems": 1,
+      "items": { "type": "string" },
+      "examples": [
+        ["planejamento", "producao_estrategica", "producao_executiva", "aprovacao", "consolidacao_final"]
+      ]
+    },
+
+    "steps": {
+      "type": "array",
+      "description": "Sequência de etapas do workflow. Ordem é canônica.",
+      "minItems": 1,
+      "items": { "$ref": "#/definitions/step" }
+    },
+
+    "handoff_rules": {
+      "type": "array",
+      "description": "Regras explícitas de transição entre steps. Nenhuma etapa relevante deve consumir output bruto da anterior sem transformação do AM.",
+      "items": {
+        "type": "object",
+        "required": ["from_step", "to_step", "rule", "mediator"],
+        "additionalProperties": false,
+        "properties": {
+          "from_step": { "type": "string" },
+          "to_step": { "type": "string" },
+          "rule": { "type": "string", "description": "Regra em linguagem natural. Ex: Copy aprovada não vai para design sem brief de design intermediário." },
+          "mediator": { "type": "string", "description": "Quem transforma o output. Geralmente account-manager." }
+        }
+      }
+    },
+
+    "completion_rules": {
+      "type": "object",
+      "description": "O que define o workflow como concluído.",
+      "required": ["final_step_id", "final_artifact", "requires_all_gates"],
+      "additionalProperties": false,
+      "properties": {
+        "final_step_id": { "type": "string" },
+        "final_artifact": { "type": "string" },
+        "requires_all_gates": {
+          "type": "boolean",
+          "description": "Se true, todos os gates obrigatórios devem ter sido aprovados."
+        }
+      }
+    },
+
+    "fallbacks": {
+      "type": "array",
+      "description": "Fallbacks globais do workflow (complementam os de entry_requirements).",
+      "items": {
+        "type": "object",
+        "required": ["when", "action"],
+        "properties": {
+          "when": { "type": "string" },
+          "action": { "type": "string" }
+        }
+      }
+    }
+  },
+
+  "definitions": {
+    "step": {
+      "type": "object",
+      "required": [
+        "id", "title", "goal", "phase",
+        "primary_skill", "support_skills",
+        "input_artifacts", "output_artifacts",
+        "approval_gate", "rebrief_policy",
+        "quality_checks"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Identificador único do step dentro do workflow. Ex: am_briefing, copy_lp.",
+          "pattern": "^[a-z0-9_]+$"
+        },
+        "title": {
+          "type": "string",
+          "description": "Nome legível do step para UI."
+        },
+        "goal": {
+          "type": "string",
+          "description": "Objetivo em uma frase do que este step deve produzir."
+        },
+        "phase": {
+          "type": "string",
+          "description": "Fase de negócio à qual este step pertence. Deve existir no array phases."
+        },
+        "primary_skill": {
+          "type": "string",
+          "description": "Skill responsável pela execução deste step."
+        },
+        "support_skills": {
+          "type": "array",
+          "description": "Skills auxiliares que podem ser consultadas, mas não são executoras primárias.",
+          "items": { "type": "string" }
+        },
+        "input_artifacts": {
+          "type": "array",
+          "description": "Artefatos que este step consome como entrada. Gerados por steps anteriores.",
+          "items": { "type": "string" }
+        },
+        "output_artifacts": {
+          "type": "array",
+          "description": "Artefatos que este step deve produzir como saída.",
+          "items": { "type": "string" }
+        },
+        "approval_gate": {
+          "$ref": "#/definitions/approval_gate"
+        },
+        "rebrief_policy": {
+          "$ref": "#/definitions/rebrief_policy"
+        },
+        "quality_checks": {
+          "type": "array",
+          "description": "Critérios de qualidade que o output deste step deve atender.",
+          "items": {
+            "type": "object",
+            "required": ["criterion"],
+            "properties": {
+              "criterion": { "type": "string" },
+              "description": { "type": "string" }
+            }
+          }
+        }
+      }
+    },
+
+    "approval_gate": {
+      "type": "object",
+      "required": ["required", "type", "approve_action", "reject_action", "rebrief_action"],
+      "additionalProperties": false,
+      "properties": {
+        "required": {
+          "type": "boolean",
+          "description": "Se true, o workflow para neste step e aguarda ação humana."
+        },
+        "type": {
+          "type": "string",
+          "description": "Tipo do gate. Define o contexto de revisão.",
+          "enum": ["briefing", "copy", "hook", "calendar", "design", "final", "none"]
+        },
+        "approve_action": {
+          "type": "string",
+          "description": "O que acontece quando o humano aprova. Pode ser vazio se required=false."
+        },
+        "reject_action": {
+          "type": "string",
+          "description": "O que acontece quando o humano rejeita."
+        },
+        "rebrief_action": {
+          "type": "string",
+          "description": "O que acontece quando o humano solicita rebrief."
+        }
+      }
+    },
+
+    "rebrief_policy": {
+      "type": "object",
+      "required": ["allowed", "mode"],
+      "additionalProperties": false,
+      "properties": {
+        "allowed": {
+          "type": "boolean"
+        },
+        "mode": {
+          "type": "string",
+          "enum": ["rerun_step", "restart_from_step", "restart_entire_workflow"],
+          "description": "rerun_step: reexecuta apenas este step. restart_from_step: volta para target_step_id. restart_entire_workflow: reinicia do início."
+        },
+        "target_step_id": {
+          "type": "string",
+          "description": "Obrigatório quando mode=restart_from_step. Define o step de retorno."
+        },
+        "invalidates": {
+          "type": "array",
+          "description": "Steps que ficam inválidos (pending) quando este step é refeito.",
+          "items": { "type": "string" }
+        }
+      }
+    }
+  }
+}
