@@ -14,6 +14,8 @@ export interface Client {
 interface AppStore {
   activeClient: Client | null
   setActiveClient: (client: Client | null) => void
+  model: string
+  setModel: (model: string) => void
 }
 
 export const useStore = create<AppStore>()(
@@ -21,6 +23,8 @@ export const useStore = create<AppStore>()(
     (set) => ({
       activeClient: null,
       setActiveClient: (client) => set({ activeClient: client }),
+      model: 'claude-sonnet-4-6',
+      setModel: (model) => set({ model }),
     }),
     { name: 'v4-platform-store' }
   )

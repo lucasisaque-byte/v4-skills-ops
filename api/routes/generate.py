@@ -1,32 +1,38 @@
 import json
 from fastapi import APIRouter, HTTPException
 from fastapi.responses import StreamingResponse
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict, Field
 from typing import Optional
 from api.services.orchestrator import orchestrate_and_stream
 from api.services.client_context import get_client_context
 from api.services.output_store import save_output
+from api.routes.config import ALLOWED_MODELS
 
 router = APIRouter(prefix="/generate", tags=["generate"])
 
 
 # ─── Request Models ────────────────────────────────────────────────
 
-class HooksRequest(BaseModel):
+class _GenerateRequestBase(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
+    llm_model: Optional[str] = Field(default=None, alias="model")
+
+
+class HooksRequest(_GenerateRequestBase):
     client_id: str
     theme: str
     platform: str = "Instagram"
     icp_override: Optional[str] = None
 
 
-class CopyRequest(BaseModel):
+class CopyRequest(_GenerateRequestBase):
     client_id: str
     campaign_description: Optional[str] = None
     persona_focus: Optional[str] = None
     output_format: str = "structured"
 
 
-class CalendarRequest(BaseModel):
+class CalendarRequest(_GenerateRequestBase):
     client_id: str
     month: str
     frequency: str = "3x/semana"
@@ -36,7 +42,7 @@ class CalendarRequest(BaseModel):
     custom_pillars: Optional[str] = None
 
 
-class AdsRequest(BaseModel):
+class AdsRequest(_GenerateRequestBase):
     client_id: str
     campaign_objective: str
     platform: str
@@ -45,11 +51,19 @@ class AdsRequest(BaseModel):
     audience_override: Optional[str] = None
 
 
-class ScriptRequest(BaseModel):
+class ScriptRequest(_GenerateRequestBase):
     client_id: str
     hook: str
     theme: str
     platform: str = "Instagram Reels"
+
+
+def _validate_optional_model(m: Optional[str]) -> Optional[str]:
+    if m is None:
+        return None
+    if m not in ALLOWED_MODELS:
+        raise HTTPException(status_code=400, detail="Unknown model")
+    return m
 
 
 # ─── Helpers ───────────────────────────────────────────────────────
@@ -93,8 +107,9 @@ def generate_hooks(req: HooksRequest):
     task = f"Gerar 5 variações de hook para o tema: {req.theme}. Plataforma: {req.platform}."
     if req.icp_override:
         task += f" ICP customizado: {req.icp_override}."
+    m = _validate_optional_model(req.llm_model)
     return _sse_stream_and_save(
-        orchestrate_and_stream(task, "hook-engineer", ctx),
+        orchestrate_and_stream(task, "hook-engineer", ctx, model=m),
         req.client_id, ctx["client_name"], "hooks", req.theme
     )
 
@@ -110,8 +125,9 @@ def generate_copy(req: CopyRequest):
     if req.output_format == "html":
         task += " Incluir também wireframe em HTML/CSS."
     summary = req.campaign_description or "Copy de landing page"
+    m = _validate_optional_model(req.llm_model)
     return _sse_stream_and_save(
-        orchestrate_and_stream(task, "copywriting", ctx),
+        orchestrate_and_stream(task, "copywriting", ctx, model=m),
         req.client_id, ctx["client_name"], "copy", summary
     )
 
@@ -127,8 +143,9 @@ def generate_calendar(req: CalendarRequest):
     )
     if req.pillar_mode == "manual" and req.custom_pillars:
         task += f" Pilares definidos: {req.custom_pillars}."
+    m = _validate_optional_model(req.llm_model)
     return _sse_stream_and_save(
-        orchestrate_and_stream(task, "editorial-calendar-builder", ctx),
+        orchestrate_and_stream(task, "editorial-calendar-builder", ctx, model=m),
         req.client_id, ctx["client_name"], "calendar", req.month
     )
 
@@ -152,8 +169,9 @@ def generate_ads(req: AdsRequest):
     )
     if req.audience_override:
         task += f" Público customizado: {req.audience_override}."
+    m = _validate_optional_model(req.llm_model)
     return _sse_stream_and_save(
-        orchestrate_and_stream(task, "social-media-designer", ctx),
+        orchestrate_and_stream(task, "social-media-designer", ctx, model=m),
         req.client_id, ctx["client_name"], "ads", req.offer_description
     )
 
@@ -168,7 +186,8 @@ def generate_reel_script(req: ScriptRequest):
         f"Plataforma: {req.platform}. "
         "Entregar: Hook (0-3s), Desenvolvimento (3-90s com marcações de cena), CTA (últimos 5s), Legenda com hashtags."
     )
+    m = _validate_optional_model(req.llm_model)
     return _sse_stream_and_save(
-        orchestrate_and_stream(task, "reels-script-architect", ctx),
+        orchestrate_and_stream(task, "reels-script-architect", ctx, model=m),
         req.client_id, ctx["client_name"], "reel-script", req.hook
     )

@@ -2,6 +2,7 @@
 
 import { useState, useRef } from 'react'
 import { api } from '@/lib/api'
+import { useStore } from '@/lib/store'
 
 export type WorkflowPhase = 'idle' | 'planning' | 'streaming' | 'waiting_approval' | 'done' | 'error'
 
@@ -47,6 +48,7 @@ interface UseWorkflowRunReturn {
 }
 
 export function useWorkflowRun(): UseWorkflowRunReturn {
+  const model = useStore((s) => s.model)
   const [phase, setPhase] = useState<WorkflowPhase>('idle')
   const [meta, setMeta] = useState<WorkflowMeta | null>(null)
   const [output, setOutput] = useState('')
@@ -82,7 +84,7 @@ export function useWorkflowRun(): UseWorkflowRunReturn {
     reset()
     setPhase('planning')
 
-    api.createWorkflowRun({ client_id, task_type, input })
+    api.createWorkflowRun({ client_id, task_type, input, model })
       .then((run) => {
         const firstStep = run.current_step
         if (!firstStep) {

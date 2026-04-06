@@ -6,7 +6,7 @@ import { api } from '@/lib/api'
 import { X, Image, CalendarDays, FileText, Palette, Loader2 } from 'lucide-react'
 import { ClientPicker } from '@/components/ClientPicker'
 import { Button } from '@/components/ui/button'
-import type { Client } from '@/lib/store'
+import { useStore, type Client } from '@/lib/store'
 
 interface Props {
   open: boolean
@@ -81,6 +81,7 @@ function getMonthLabel() {
 
 export function NewTaskModal({ open, onClose }: Props) {
   const router = useRouter()
+  const model = useStore((s) => s.model)
   const overlayRef = useRef<HTMLDivElement>(null)
 
   const [selectedTask, setSelectedTask] = useState<TaskId>('ads')
@@ -120,6 +121,7 @@ export function NewTaskModal({ open, onClose }: Props) {
         client_id: client.id,
         task_type: task.id,
         input,
+        model,
       })
       onClose()
       router.push(`/workspace/runs/${run.run_id}`)

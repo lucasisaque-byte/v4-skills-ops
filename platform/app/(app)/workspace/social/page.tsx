@@ -6,7 +6,7 @@ import { api } from '@/lib/api'
 import { ClientPicker } from '@/components/ClientPicker'
 import { Button } from '@/components/ui/button'
 import { CalendarDays, Loader2 } from 'lucide-react'
-import type { Client } from '@/lib/store'
+import { useStore, type Client } from '@/lib/store'
 
 const months = [
   'Janeiro 2026', 'Fevereiro 2026', 'Março 2026', 'Abril 2026',
@@ -18,6 +18,7 @@ const allPlatforms = ['Instagram', 'LinkedIn', 'TikTok']
 
 export default function SocialPage() {
   const router = useRouter()
+  const model = useStore((s) => s.model)
   const [client, setClient] = useState<Client | null>(null)
   const currentMonthIndex = new Date().getMonth()
   const [month, setMonth] = useState(months[currentMonthIndex] || months[3])
@@ -46,6 +47,7 @@ export default function SocialPage() {
           pillar_mode: pillarMode,
           custom_pillars: pillarMode === 'manual' ? customPillars : undefined,
         },
+        model,
       })
       router.push(`/workspace/runs/${run.run_id}`)
     } catch (e: any) {

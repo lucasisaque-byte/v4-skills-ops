@@ -14,7 +14,7 @@ import logging
 
 from api.models.workflow import RuntimePlan, UISummary, RequiredContextItem, RuntimeStepBriefing
 from api.services.skill_runner import (
-    load_skill, build_context_block, stream_skill, _client, MODEL
+    load_skill, build_context_block, stream_skill, _client, _resolve_model,
 )
 from api.workflow.registry import template_summary_for_prompt, get_template_for_task
 
@@ -95,6 +95,8 @@ def plan_workflow(
     task_description: str,
     task_type: str,
     client_context: dict | None = None,
+    *,
+    model: str | None = None,
 ) -> RuntimePlan:
     """
     Chama o Account Manager para produzir um RuntimePlan completo.
@@ -133,8 +135,10 @@ def plan_workflow(
 
     user_message = "\n\n".join(user_parts)
 
+    resolved_model = _resolve_model(model)
+
     response = _client().messages.create(
-        model=MODEL,
+        model=resolved_model,
         max_tokens=2000,
         system=system_prompt,
         messages=[{"role": "user", "content": user_message}],
@@ -197,6 +201,8 @@ def orchestrate_and_stream(
     task_description: str,
     skill_hint: str,
     client_context: dict | None = None,
+    *,
+    model: str | None = None,
 ):
     """
     Compatibilidade com /generate/* existentes.
@@ -220,7 +226,7 @@ def orchestrate_and_stream(
     try:
         yield "__AM_START__"
 
-        plan = plan_workflow(task_description, task_type, client_context)
+        plan = plan_workflow(task_description, task_type, client_context, model=model)
 
         # Extrai skill e briefing do primeiro step executável
         skill_alvo = skill_hint  # default
@@ -242,7 +248,7 @@ def orchestrate_and_stream(
         yield f"__AM_DONE__{json.dumps({'skill': skill_alvo, 'observacoes': plan.observations}, ensure_ascii=False)}"
 
         yield "__SKILL_START__"
-        for chunk in stream_skill(skill_alvo, briefing, None):
+        for chunk in stream_skill(skill_alvo, briefing, None, model=model):
             yield chunk
 
     except Exception as e:

@@ -12,6 +12,7 @@ Endpoints:
   GET    /workflow-runs/templates                          — lista templates disponíveis
 """
 import json
+import os
 from fastapi import APIRouter, HTTPException
 from fastapi.responses import StreamingResponse
 
@@ -27,8 +28,17 @@ from api.services.client_context import get_client_context
 from api.services.output_store import save_output
 from api.workflow import engine
 from api.workflow.registry import list_templates
+from api.routes.config import ALLOWED_MODELS
 
 router = APIRouter(tags=["workflow-runs"])
+
+
+def _validate_optional_model(m: str | None) -> str | None:
+    if m is None:
+        return None
+    if m not in ALLOWED_MODELS:
+        raise HTTPException(status_code=400, detail="Unknown model")
+    return m
 
 
 # ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -62,8 +72,10 @@ def _step_sse_stream(run_id: str, step_id: str, client_id: str):
 
     yield f"data: {json.dumps({'event': '__SKILL_START__', 'step_id': step_id, 'skill': step.primary_skill})}\n\n"
 
+    model = run.llm_model or os.getenv("MODEL", "claude-sonnet-4-6")
+
     try:
-        for chunk in stream_skill(step.primary_skill, briefing, None):
+        for chunk in stream_skill(step.primary_skill, briefing, None, model=model):
             accumulated.append(chunk)
             yield f"data: {json.dumps({'text': chunk})}\n\n"
     except Exception as e:
@@ -118,8 +130,11 @@ def create_workflow_run(req: CreateWorkflowRunRequest):
     # Monta descrição da tarefa a partir dos inputs
     task_description = _build_task_description(req.task_type, req.input)
 
+    validated = _validate_optional_model(req.llm_model)
+    resolved_model = validated or os.getenv("MODEL", "claude-sonnet-4-6")
+
     # AM produz RuntimePlan
-    plan = plan_workflow(task_description, req.task_type, ctx)
+    plan = plan_workflow(task_description, req.task_type, ctx, model=validated)
 
     # Engine cria e persiste o WorkflowRun
     run = engine.create_run(
@@ -127,6 +142,7 @@ def create_workflow_run(req: CreateWorkflowRunRequest):
         client_name=ctx["client_name"],
         plan=plan,
         task_input=req.input,
+        llm_model=resolved_model,
     )
 
     first_step = engine.get_current_step(run)

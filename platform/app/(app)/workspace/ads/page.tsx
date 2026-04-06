@@ -6,7 +6,7 @@ import { api } from '@/lib/api'
 import { ClientPicker } from '@/components/ClientPicker'
 import { Button } from '@/components/ui/button'
 import { Image, Loader2 } from 'lucide-react'
-import type { Client } from '@/lib/store'
+import { useStore, type Client } from '@/lib/store'
 
 const objectives = [
   { value: 'leads',      label: 'Geração de leads' },
@@ -30,6 +30,7 @@ const tones = [
 
 export default function AdsPage() {
   const router = useRouter()
+  const model = useStore((s) => s.model)
   const [client, setClient] = useState<Client | null>(null)
   const [objective, setObjective] = useState('leads')
   const [platform, setPlatform] = useState('meta-feed')
@@ -47,6 +48,7 @@ export default function AdsPage() {
         client_id: client.id,
         task_type: 'ads',
         input: { campaign_objective: objective, platform, offer_description: offer, tone },
+        model,
       })
       router.push(`/workspace/runs/${run.run_id}`)
     } catch (e: any) {

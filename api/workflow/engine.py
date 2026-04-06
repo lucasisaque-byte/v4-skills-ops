@@ -111,6 +111,7 @@ def create_run(
     client_name: str,
     plan: RuntimePlan,
     task_input: dict,
+    llm_model: str | None = None,
 ) -> WorkflowRun:
     """
     Cria um WorkflowRun a partir do RuntimePlan produzido pelo AM.
@@ -143,6 +144,7 @@ def create_run(
         client_name=client_name,
         template_id=plan.workflow_template_id,
         task_type=plan.task_type,
+        llm_model=llm_model,
         task_input=task_input,
         task_summary=plan.task_summary,
         status="planned",

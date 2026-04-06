@@ -58,6 +58,11 @@ async function readSSE(
 }
 
 export const api = {
+  // ─── Config ─────────────────────────────────────────────────────────────────
+  getConfig: () => fetchAPI('/config'),
+  setConfig: (data: { model?: string; max_tokens?: number }) =>
+    postJSON('/config', data),
+
   // ─── Clients ────────────────────────────────────────────────────────────────
   listClients: () => fetchAPI('/clients'),
   getClient: (id: string) => fetchAPI(`/clients/${id}`),
@@ -79,6 +84,7 @@ export const api = {
     client_id: string
     task_type: string
     input: object
+    model?: string
   }) => postJSON('/workflow-runs', data),
 
   getWorkflowRun: (run_id: string) => fetchAPI(`/workflow-runs/${run_id}`),
@@ -143,7 +149,7 @@ export const api = {
   // ─── Legacy: /generate/* (mantido para compatibilidade) ────────────────────
   streamGenerate: (
     endpoint: string,
-    data: object,
+    data: object & { model?: string },
     onChunk: (text: string) => void,
     onDone: () => void,
     onError: (e: Error) => void,

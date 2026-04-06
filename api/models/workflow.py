@@ -8,7 +8,7 @@ Três camadas:
 """
 from __future__ import annotations
 from typing import Literal, Optional
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict, Field
 
 
 # ─── Workflow Template (DSL estático) ─────────────────────────────────────────
@@ -160,6 +160,7 @@ class WorkflowRun(BaseModel):
     client_name: str
     template_id: str
     task_type: str
+    llm_model: Optional[str] = None  # modelo efetivo deste run (persistido para steps/stream)
     task_input: dict = {}             # inputs originais do usuário
     task_summary: str
     status: WorkflowStatus = "draft"
@@ -173,9 +174,12 @@ class WorkflowRun(BaseModel):
 # ─── Request / Response shapes ────────────────────────────────────────────────
 
 class CreateWorkflowRunRequest(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
+
     client_id: str
     task_type: str
     input: dict = {}
+    llm_model: Optional[str] = Field(default=None, alias="model")
 
 
 class ApproveStepRequest(BaseModel):

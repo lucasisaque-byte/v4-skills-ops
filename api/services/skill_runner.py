@@ -7,8 +7,29 @@ from pathlib import Path
 import anthropic
 
 SKILLS_DIR = Path(__file__).parent.parent.parent / "skills"
-MODEL = os.getenv("MODEL", "claude-sonnet-4-6")
-MAX_TOKENS = int(os.getenv("MAX_TOKENS", "8096"))
+
+_DEFAULT_MODEL = "claude-sonnet-4-6"
+_DEFAULT_MAX_TOKENS = 8096
+_MAX_TOKENS_CAP = 128_000
+
+
+def _resolve_model(explicit: str | None) -> str:
+    if explicit:
+        return explicit
+    return os.getenv("MODEL", _DEFAULT_MODEL)
+
+
+def _resolve_max_tokens(explicit: int | None) -> int:
+    if explicit is not None:
+        return explicit
+    raw = os.getenv("MAX_TOKENS", str(_DEFAULT_MAX_TOKENS))
+    try:
+        v = int(raw)
+    except ValueError:
+        return _DEFAULT_MAX_TOKENS
+    if v < 1 or v > _MAX_TOKENS_CAP:
+        return _DEFAULT_MAX_TOKENS
+    return v
 
 
 def _client() -> anthropic.Anthropic:
@@ -56,32 +77,50 @@ def build_context_block(context: dict) -> str:
     return "\n".join(parts)
 
 
-def run_skill(skill_name: str, prompt: str, client_context: dict | None = None) -> str:
+def run_skill(
+    skill_name: str,
+    prompt: str,
+    client_context: dict | None = None,
+    *,
+    model: str | None = None,
+    max_tokens: int | None = None,
+) -> str:
     """Executa uma skill sincronamente e retorna o texto completo"""
+    model = _resolve_model(model)
+    max_tokens = _resolve_max_tokens(max_tokens)
     system_prompt = load_skill(skill_name)
     user_message = prompt
     if client_context:
         user_message = f"{build_context_block(client_context)}\n\n---\n\n{prompt}"
 
     response = _client().messages.create(
-        model=MODEL,
-        max_tokens=MAX_TOKENS,
+        model=model,
+        max_tokens=max_tokens,
         system=system_prompt,
         messages=[{"role": "user", "content": user_message}],
     )
     return response.content[0].text
 
 
-def stream_skill(skill_name: str, prompt: str, client_context: dict | None = None):
+def stream_skill(
+    skill_name: str,
+    prompt: str,
+    client_context: dict | None = None,
+    *,
+    model: str | None = None,
+    max_tokens: int | None = None,
+):
     """Executa uma skill com streaming — yield chunks de texto"""
+    model = _resolve_model(model)
+    max_tokens = _resolve_max_tokens(max_tokens)
     system_prompt = load_skill(skill_name)
     user_message = prompt
     if client_context:
         user_message = f"{build_context_block(client_context)}\n\n---\n\n{prompt}"
 
     with _client().messages.stream(
-        model=MODEL,
-        max_tokens=MAX_TOKENS,
+        model=model,
+        max_tokens=max_tokens,
         system=system_prompt,
         messages=[{"role": "user", "content": user_message}],
     ) as stream:

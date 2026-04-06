@@ -6,10 +6,11 @@ import { api } from '@/lib/api'
 import { ClientPicker } from '@/components/ClientPicker'
 import { Button } from '@/components/ui/button'
 import { Palette, Loader2 } from 'lucide-react'
-import type { Client } from '@/lib/store'
+import { useStore, type Client } from '@/lib/store'
 
 export default function BrandPage() {
   const router = useRouter()
+  const model = useStore((s) => s.model)
   const [client, setClient] = useState<Client | null>(null)
   const [url, setUrl] = useState('')
   const [instagram, setInstagram] = useState('')
@@ -32,6 +33,7 @@ export default function BrandPage() {
           linkedin: linkedin || undefined,
           additional_context: context || undefined,
         },
+        model,
       })
       router.push(`/workspace/runs/${run.run_id}`)
     } catch (e: any) {
