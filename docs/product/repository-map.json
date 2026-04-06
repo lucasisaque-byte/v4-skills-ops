@@ -1,0 +1,140 @@
+[
+  {
+    "old_path": "PLATFORM_BRIEFING.md",
+    "new_path": "docs/product/platform-briefing.md",
+    "action": "moved",
+    "notes": "Documento de contexto para sessões de IA. Não era um README — pertence a docs/product/."
+  },
+  {
+    "old_path": "agent/orchestrator.py",
+    "new_path": "archive/prototypes/agent-v0/orchestrator.py",
+    "action": "archived",
+    "notes": "Protótipo com Anthropic SDK. Nunca integrado ao sistema ativo (OpenAI). Referenciava skills/social-media/ inexistente."
+  },
+  {
+    "old_path": "agent/config.py",
+    "new_path": "archive/prototypes/agent-v0/config.py",
+    "action": "archived",
+    "notes": "Configuração do protótipo Anthropic."
+  },
+  {
+    "old_path": "agent/__init__.py",
+    "new_path": "archive/prototypes/agent-v0/__init__.py",
+    "action": "archived",
+    "notes": "Init do módulo protótipo."
+  },
+  {
+    "old_path": "export-slides.js",
+    "new_path": "tooling/scripts/export-slides.js",
+    "action": "moved",
+    "notes": "Script Puppeteer para exportar slides do carrossel Via Journey. Utilitário de cliente, não pertencia à raiz."
+  },
+  {
+    "old_path": "package.json",
+    "new_path": "tooling/scripts/package.json",
+    "action": "moved",
+    "notes": "Continha apenas puppeteer para export-slides.js. Causava confusão sobre stack JS do projeto."
+  },
+  {
+    "old_path": "package-lock.json",
+    "new_path": "tooling/scripts/package-lock.json",
+    "action": "moved",
+    "notes": "Lock file do package.json raiz."
+  },
+  {
+    "old_path": "plano-execucao-v4-skills-ops.docx",
+    "new_path": "docs/product/plano-execucao.docx",
+    "action": "moved",
+    "notes": "Documento de planejamento estratégico."
+  },
+  {
+    "old_path": "proximos-passos-v4-skills-ops.html",
+    "new_path": "docs/product/proximos-passos.html",
+    "action": "moved",
+    "notes": "Roadmap HTML histórico."
+  },
+  {
+    "old_path": "clients/.obsidian/",
+    "new_path": "archive/personal-workspace/.obsidian/",
+    "action": "archived",
+    "notes": "Configuração do vault Obsidian. Workspace pessoal commitado acidentalmente."
+  },
+  {
+    "old_path": "clients/Sem título.base",
+    "new_path": "archive/personal-workspace/Sem título.base",
+    "action": "archived",
+    "notes": "Banco de dados Obsidian Bases. Workspace pessoal."
+  },
+  {
+    "old_path": "clients/Sem título.canvas",
+    "new_path": "archive/personal-workspace/Sem título.canvas",
+    "action": "archived",
+    "notes": "Canvas visual Obsidian. Workspace pessoal."
+  },
+  {
+    "old_path": "clients/Sem título/",
+    "new_path": "archive/personal-workspace/clients-Sem-titulo/",
+    "action": "archived",
+    "notes": "Diretório vazio criado pelo Obsidian em clients/."
+  },
+  {
+    "old_path": "clients/via-journey/Sem título/",
+    "new_path": null,
+    "action": "removed",
+    "notes": "Diretório vazio. Sem conteúdo."
+  },
+  {
+    "old_path": "docs/arquitetura-agente-v4.txt",
+    "new_path": "docs/adr/001-agent-v0-architecture.md",
+    "action": "moved",
+    "notes": "Documento de arquitetura da v1 do agente. Valor histórico — convertido em ADR."
+  },
+  {
+    "old_path": "docs/skill-brand-design-system.txt",
+    "new_path": "skills/brand-system-builder/references/design-system-guide.md",
+    "action": "moved",
+    "notes": "Referência da skill de brand system. Pertencia à skill, não à documentação de produto."
+  },
+  {
+    "old_path": "index.html",
+    "new_path": "clients/via-journey/output/lp-b2b/index.html",
+    "action": "moved",
+    "notes": "LP Via Journey (84002 bytes). Idêntica ao arquivo em outputs/via-journey/lp-b2b/ (nested repo). Consolidada em localização semântica correta."
+  },
+  {
+    "old_path": "assets/",
+    "new_path": "clients/via-journey/output/lp-b2b/assets/",
+    "action": "moved",
+    "notes": "Imagens da LP Via Journey. Duplicata do nested repo. Consolidada junto com index.html."
+  },
+  {
+    "old_path": "outputs/via-journey/lp-b2b/",
+    "new_path": "clients/via-journey/output/lp-b2b/",
+    "action": "consolidated",
+    "notes": "Era um nested git repo implícito (não declarado em .gitmodules, não trackado pelo parent). .git interno removido. Conteúdo consolidado na localização semântica correta."
+  },
+  {
+    "old_path": "clients/kce/copywriting/kce-dcc.md",
+    "new_path": null,
+    "action": "removed",
+    "notes": "Duplicata idêntica de clients/kce/dcc.md (diff confirmou: arquivos idênticos, 745 linhas). A API usa clients/kce/dcc.md via rglob — este arquivo nunca era o primário."
+  },
+  {
+    "old_path": "clients/kce/copywriting/ucm-kce",
+    "new_path": "archive/pending-review/kce-ucm-raw.json",
+    "action": "archived",
+    "notes": "Arquivo JSON (114KB) com UCM do KCE. Não é lido pela API (que procura ucm.md). Pode conter dados mais ricos que clients/kce/ucm.md. Aguarda decisão humana."
+  },
+  {
+    "old_path": "clients/kce/copywriting/",
+    "new_path": null,
+    "action": "removed",
+    "notes": "Pasta ficou vazia após remoção do DCC duplicado e arquivamento do ucm-kce. Removida com rmdir."
+  },
+  {
+    "old_path": "clients/kce/criativos/",
+    "new_path": "clients/kce/output/",
+    "action": "renamed",
+    "notes": "Padronizar nomenclatura com outros clientes (via-journey usa output/). Contém PNGs de ads, key visuals e social media gerados."
+  }
+]

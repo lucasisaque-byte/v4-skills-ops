@@ -1,18 +1,18 @@
 """
-Executa skills usando OpenAI como LLM principal.
+Executa skills usando Anthropic como LLM principal.
 """
 import os
 import json
 from pathlib import Path
-from openai import OpenAI
+import anthropic
 
 SKILLS_DIR = Path(__file__).parent.parent.parent / "skills"
-MODEL = os.getenv("OPENAI_MODEL", "gpt-4o-mini")
+MODEL = os.getenv("MODEL", "claude-sonnet-4-6")
 MAX_TOKENS = int(os.getenv("MAX_TOKENS", "8096"))
 
 
-def _client() -> OpenAI:
-    return OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+def _client() -> anthropic.Anthropic:
+    return anthropic.Anthropic(api_key=os.getenv("ANTHROPIC_API_KEY"))
 
 
 def load_skill(skill_name: str) -> str:
@@ -63,15 +63,13 @@ def run_skill(skill_name: str, prompt: str, client_context: dict | None = None) 
     if client_context:
         user_message = f"{build_context_block(client_context)}\n\n---\n\n{prompt}"
 
-    response = _client().chat.completions.create(
+    response = _client().messages.create(
         model=MODEL,
         max_tokens=MAX_TOKENS,
-        messages=[
-            {"role": "system", "content": system_prompt},
-            {"role": "user", "content": user_message},
-        ],
+        system=system_prompt,
+        messages=[{"role": "user", "content": user_message}],
     )
-    return response.choices[0].message.content
+    return response.content[0].text
 
 
 def stream_skill(skill_name: str, prompt: str, client_context: dict | None = None):
@@ -81,16 +79,11 @@ def stream_skill(skill_name: str, prompt: str, client_context: dict | None = Non
     if client_context:
         user_message = f"{build_context_block(client_context)}\n\n---\n\n{prompt}"
 
-    stream = _client().chat.completions.create(
+    with _client().messages.stream(
         model=MODEL,
         max_tokens=MAX_TOKENS,
-        stream=True,
-        messages=[
-            {"role": "system", "content": system_prompt},
-            {"role": "user", "content": user_message},
-        ],
-    )
-    for chunk in stream:
-        delta = chunk.choices[0].delta.content
-        if delta:
-            yield delta
+        system=system_prompt,
+        messages=[{"role": "user", "content": user_message}],
+    ) as stream:
+        for chunk in stream.text_stream:
+            yield chunk

@@ -4,7 +4,7 @@
     {
       "name": "LP Via Journey",
       "runtimeExecutable": "npx",
-      "runtimeArgs": ["serve", "outputs/via-journey/lp-b2b", "-p", "3000", "--no-clipboard"],
+      "runtimeArgs": ["serve", "clients/via-journey/output/lp-b2b", "-p", "3000", "--no-clipboard"],
       "port": 3000
     },
     {

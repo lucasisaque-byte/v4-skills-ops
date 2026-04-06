@@ -1,0 +1,1237 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>V4 Skills Ops — Próximos Passos</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'Inter', sans-serif;
+    background: #0B0B1A;
+    color: #E0E0E0;
+    min-height: 100vh;
+  }
+
+  .header {
+    background: linear-gradient(135deg, #0F0F23 0%, #1A1A3E 100%);
+    border-bottom: 1px solid rgba(233, 69, 96, 0.3);
+    padding: 28px 40px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .header h1 {
+    font-size: 22px;
+    font-weight: 800;
+    color: #fff;
+    letter-spacing: -0.5px;
+  }
+
+  .header h1 span { color: #E94560; }
+
+  .header-meta {
+    display: flex;
+    gap: 20px;
+    align-items: center;
+  }
+
+  .header-meta .stat {
+    text-align: center;
+    padding: 6px 16px;
+    border-radius: 8px;
+    background: rgba(255,255,255,0.05);
+  }
+
+  .stat-value {
+    font-size: 20px;
+    font-weight: 700;
+    color: #fff;
+  }
+
+  .stat-label {
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: #888;
+  }
+
+  .container { padding: 32px 40px; max-width: 1400px; margin: 0 auto; }
+
+  /* Priority Banner */
+  .priority-banner {
+    background: linear-gradient(135deg, rgba(233, 69, 96, 0.15), rgba(15, 52, 96, 0.15));
+    border: 1px solid rgba(233, 69, 96, 0.25);
+    border-radius: 12px;
+    padding: 20px 28px;
+    margin-bottom: 32px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+  }
+
+  .priority-banner .icon {
+    font-size: 28px;
+    flex-shrink: 0;
+  }
+
+  .priority-banner .text h3 {
+    font-size: 14px;
+    font-weight: 700;
+    color: #E94560;
+    margin-bottom: 4px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+  }
+
+  .priority-banner .text p {
+    font-size: 13px;
+    color: #B0B0B0;
+    line-height: 1.5;
+  }
+
+  .priority-banner .text p strong { color: #fff; }
+
+  /* Phase Sections */
+  .phase-section {
+    margin-bottom: 36px;
+  }
+
+  .phase-header {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    margin-bottom: 16px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid rgba(255,255,255,0.06);
+  }
+
+  .phase-badge {
+    padding: 5px 14px;
+    border-radius: 6px;
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    flex-shrink: 0;
+  }
+
+  .phase-0 .phase-badge { background: rgba(22, 199, 154, 0.15); color: #16C79A; border: 1px solid rgba(22, 199, 154, 0.3); }
+  .phase-1 .phase-badge { background: rgba(245, 166, 35, 0.15); color: #F5A623; border: 1px solid rgba(245, 166, 35, 0.3); }
+  .phase-2 .phase-badge { background: rgba(245, 166, 35, 0.15); color: #F5A623; border: 1px solid rgba(245, 166, 35, 0.3); }
+  .phase-3 .phase-badge { background: rgba(22, 199, 154, 0.15); color: #16C79A; border: 1px solid rgba(22, 199, 154, 0.3); }
+  .phase-4 .phase-badge { background: rgba(233, 69, 96, 0.15); color: #E94560; border: 1px solid rgba(233, 69, 96, 0.3); }
+
+  .phase-title {
+    font-size: 16px;
+    font-weight: 700;
+    color: #fff;
+  }
+
+  .phase-meta {
+    margin-left: auto;
+    display: flex;
+    gap: 16px;
+    font-size: 12px;
+    color: #777;
+  }
+
+  .phase-meta span { display: flex; align-items: center; gap: 4px; }
+
+  /* Task Cards */
+  .tasks-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+    gap: 12px;
+  }
+
+  .task-card {
+    background: #12122A;
+    border: 1px solid rgba(255,255,255,0.06);
+    border-radius: 10px;
+    padding: 18px 20px;
+    transition: all 0.2s ease;
+    cursor: default;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .task-card:hover {
+    border-color: rgba(233, 69, 96, 0.3);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+  }
+
+  .task-card.critical::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 3px;
+    background: #E94560;
+  }
+
+  .task-card.important::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 3px;
+    background: #F5A623;
+  }
+
+  .task-card.normal::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 3px;
+    background: #16C79A;
+  }
+
+  .task-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 10px;
+  }
+
+  .task-id {
+    font-size: 11px;
+    font-weight: 600;
+    color: #555;
+    font-family: monospace;
+  }
+
+  .task-effort {
+    font-size: 11px;
+    font-weight: 600;
+    padding: 2px 8px;
+    border-radius: 4px;
+    background: rgba(255,255,255,0.06);
+    color: #999;
+  }
+
+  .task-title {
+    font-size: 13px;
+    font-weight: 600;
+    color: #E8E8E8;
+    line-height: 1.45;
+    margin-bottom: 12px;
+  }
+
+  .task-bottom {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+
+  .task-tags {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+  }
+
+  .tag {
+    font-size: 10px;
+    font-weight: 600;
+    padding: 3px 8px;
+    border-radius: 4px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+
+  .tag-backend { background: rgba(99, 102, 241, 0.15); color: #818CF8; }
+  .tag-frontend { background: rgba(56, 189, 248, 0.15); color: #38BDF8; }
+  .tag-schema { background: rgba(168, 85, 247, 0.15); color: #A855F7; }
+  .tag-template { background: rgba(251, 191, 36, 0.15); color: #FBBF24; }
+  .tag-database { background: rgba(236, 72, 153, 0.15); color: #EC4899; }
+  .tag-conteudo { background: rgba(34, 197, 94, 0.15); color: #22C55E; }
+
+  .task-dep {
+    font-size: 10px;
+    color: #666;
+  }
+
+  .task-file {
+    font-size: 10px;
+    color: #555;
+    font-family: monospace;
+    margin-top: 6px;
+    padding-top: 8px;
+    border-top: 1px solid rgba(255,255,255,0.04);
+  }
+
+  /* Acceptance Criteria */
+  .acceptance {
+    background: rgba(22, 199, 154, 0.06);
+    border: 1px dashed rgba(22, 199, 154, 0.25);
+    border-radius: 8px;
+    padding: 12px 16px;
+    margin-top: 12px;
+    font-size: 12px;
+    color: #16C79A;
+    line-height: 1.5;
+  }
+
+  .acceptance strong {
+    color: #16C79A;
+    font-weight: 700;
+  }
+
+  /* Dependency Flow */
+  .flow-section {
+    margin-bottom: 36px;
+  }
+
+  .flow-section h2 {
+    font-size: 16px;
+    font-weight: 700;
+    color: #fff;
+    margin-bottom: 16px;
+  }
+
+  .flow-steps {
+    display: flex;
+    align-items: center;
+    gap: 0;
+    overflow-x: auto;
+    padding: 12px 0;
+  }
+
+  .flow-step {
+    background: #12122A;
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 8px;
+    padding: 14px 18px;
+    min-width: 160px;
+    text-align: center;
+    flex-shrink: 0;
+  }
+
+  .flow-step.active {
+    border-color: #E94560;
+    background: rgba(233, 69, 96, 0.08);
+  }
+
+  .flow-step .step-label {
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: #666;
+    margin-bottom: 4px;
+  }
+
+  .flow-step.active .step-label { color: #E94560; }
+
+  .flow-step .step-name {
+    font-size: 13px;
+    font-weight: 600;
+    color: #ccc;
+  }
+
+  .flow-step.active .step-name { color: #fff; }
+
+  .flow-arrow {
+    font-size: 18px;
+    color: #333;
+    padding: 0 6px;
+    flex-shrink: 0;
+  }
+
+  /* Summary Table */
+  .summary-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 16px;
+    font-size: 13px;
+  }
+
+  .summary-table th {
+    background: #1A1A3E;
+    color: #fff;
+    font-weight: 600;
+    text-align: left;
+    padding: 10px 16px;
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+
+  .summary-table td {
+    padding: 10px 16px;
+    border-bottom: 1px solid rgba(255,255,255,0.04);
+    color: #bbb;
+  }
+
+  .summary-table tr:nth-child(even) td {
+    background: rgba(255,255,255,0.02);
+  }
+
+  .bar {
+    height: 6px;
+    border-radius: 3px;
+    background: rgba(255,255,255,0.06);
+    position: relative;
+    min-width: 100px;
+  }
+
+  .bar-fill {
+    height: 100%;
+    border-radius: 3px;
+    position: absolute;
+    left: 0;
+    top: 0;
+  }
+
+  .bar-green { background: #16C79A; }
+  .bar-orange { background: #F5A623; }
+  .bar-red { background: #E94560; }
+
+  @media (max-width: 768px) {
+    .container { padding: 20px; }
+    .header { padding: 20px; flex-direction: column; gap: 16px; }
+    .tasks-grid { grid-template-columns: 1fr; }
+    .flow-steps { flex-direction: column; }
+    .flow-arrow { transform: rotate(90deg); }
+  }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <h1>V4 Skills Ops <span>/ Próximos Passos</span></h1>
+  <div class="header-meta">
+    <div class="stat">
+      <div class="stat-value">38</div>
+      <div class="stat-label">Tarefas Total</div>
+    </div>
+    <div class="stat">
+      <div class="stat-value">~160h</div>
+      <div class="stat-label">Esforço Est.</div>
+    </div>
+    <div class="stat">
+      <div class="stat-value">4–6</div>
+      <div class="stat-label">Semanas</div>
+    </div>
+  </div>
+</div>
+
+<div class="container">
+
+  <!-- Priority Banner -->
+  <div class="priority-banner">
+    <div class="icon">🎯</div>
+    <div class="text">
+      <h3>Começar aqui</h3>
+      <p>A primeira ação é abrir <strong>orchestrator.py</strong> e substituir o prompt hardcoded pelo conteúdo dinâmico do <strong>skills/account-manager/SKILL.md</strong>. Essa única mudança já melhora drasticamente a qualidade de todos os outputs. Depois, siga a ordem: <strong>Fase 0 → 1 → 2 → 3 → 4</strong>.</p>
+    </div>
+  </div>
+
+  <!-- Critical Path -->
+  <div class="flow-section">
+    <h2>Caminho Crítico</h2>
+    <div class="flow-steps">
+      <div class="flow-step active">
+        <div class="step-label">Agora</div>
+        <div class="step-name">Fase 0<br>Quick Wins</div>
+      </div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-step">
+        <div class="step-label">Semana 1–2</div>
+        <div class="step-name">Fase 1A<br>Modelos</div>
+      </div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-step">
+        <div class="step-label">Semana 1–2</div>
+        <div class="step-name">Fase 1B<br>Engine</div>
+      </div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-step">
+        <div class="step-label">Semana 2</div>
+        <div class="step-name">Fase 1C<br>Endpoints</div>
+      </div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-step">
+        <div class="step-label">Semana 2–3</div>
+        <div class="step-name">Fase 2<br>Frontend</div>
+      </div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-step">
+        <div class="step-label">Semana 3</div>
+        <div class="step-name">Fase 3<br>Templates</div>
+      </div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-step">
+        <div class="step-label">Semana 4–5</div>
+        <div class="step-name">Fase 4<br>Supabase</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ════════════ FASE 0 ════════════ -->
+  <div class="phase-section phase-0">
+    <div class="phase-header">
+      <div class="phase-badge">Fase 0</div>
+      <div class="phase-title">Correções Críticas (Quick Wins)</div>
+      <div class="phase-meta">
+        <span>⏱ 2–3 dias</span>
+        <span>📦 5 tarefas</span>
+        <span>~21h esforço</span>
+      </div>
+    </div>
+
+    <div class="tasks-grid">
+      <div class="task-card critical">
+        <div class="task-top">
+          <div class="task-id">F0-01</div>
+          <div class="task-effort">4h</div>
+        </div>
+        <div class="task-title">Conectar SKILL.md do Account Manager ao orchestrator.py — substituir ORCHESTRATOR_SYSTEM hardcoded pelo conteúdo dinâmico do skills/account-manager/SKILL.md</div>
+        <div class="task-bottom">
+          <div class="task-tags"><span class="tag tag-backend">Backend</span></div>
+          <div class="task-dep">Sem dependência</div>
+        </div>
+        <div class="task-file">📄 api/services/orchestrator.py</div>
+      </div>
+
+      <div class="task-card critical">
+        <div class="task-top">
+          <div class="task-id">F0-02</div>
+          <div class="task-effort">3h</div>
+        </div>
+        <div class="task-title">Passar contexto resumido do cliente diretamente para a skill especializada (além do briefing do AM)</div>
+        <div class="task-bottom">
+          <div class="task-tags"><span class="tag tag-backend">Backend</span></div>
+          <div class="task-dep">Sem dependência</div>
+        </div>
+        <div class="task-file">📄 api/services/skill_runner.py</div>
+      </div>
+
+      <div class="task-card important">
+        <div class="task-top">
+          <div class="task-id">F0-03</div>
+          <div class="task-effort">4h</div>
+        </div>
+        <div class="task-title">Criar endpoint dedicado para Brand System usando brand-intel + brand-system-builder em pipeline</div>
+        <div class="task-bottom">
+          <div class="task-tags"><span class="tag tag-backend">Backend</span></div>
+          <div class="task-dep">Sem dependência</div>
+        </div>
+        <div class="task-file">📄 api/routes/generate.py</div>
+      </div>
+
+      <div class="task-card important">
+        <div class="task-top">
+          <div class="task-id">F0-04</div>
+          <div class="task-effort">8h</div>
+        </div>
+        <div class="task-title">Completar DCC dos clientes parciais: Alan, Eduzz e HS Prevent</div>
+        <div class="task-bottom">
+          <div class="task-tags"><span class="tag tag-conteudo">Conteúdo</span></div>
+          <div class="task-dep">Sem dependência</div>
+        </div>
+        <div class="task-file">📄 clients/alan/dcc.md · clients/eduzz/dcc.md · clients/hs-prevent/dcc.md</div>
+      </div>
+
+      <div class="task-card normal">
+        <div class="task-top">
+          <div class="task-id">F0-05</div>
+          <div class="task-effort">2h</div>
+        </div>
+        <div class="task-title">Tornar truncagem de contexto dinâmica baseada no tamanho real dos documentos do cliente</div>
+        <div class="task-bottom">
+          <div class="task-tags"><span class="tag tag-backend">Backend</span></div>
+          <div class="task-dep">Sem dependência</div>
+        </div>
+        <div class="task-file">📄 api/services/client_context.py</div>
+      </div>
+    </div>
+
+    <div class="acceptance">
+      <strong>✓ Critério de aceite:</strong> Gerar um hook para KCE e confirmar que o briefing do AM é visivelmente mais rico e específico que antes.
+    </div>
+  </div>
+
+  <!-- ════════════ FASE 1 ════════════ -->
+  <div class="phase-section phase-1">
+    <div class="phase-header">
+      <div class="phase-badge">Fase 1</div>
+      <div class="phase-title">Workflow Engine (Base Stateful)</div>
+      <div class="phase-meta">
+        <span>⏱ 1–2 semanas</span>
+        <span>📦 15 tarefas</span>
+        <span>~80h esforço</span>
+      </div>
+    </div>
+
+    <!-- 1A -->
+    <p style="font-size:12px; font-weight:700; color:#F5A623; text-transform:uppercase; letter-spacing:1px; margin-bottom:10px; margin-top:4px;">1A — Modelos de Dados</p>
+    <div class="tasks-grid">
+      <div class="task-card critical">
+        <div class="task-top">
+          <div class="task-id">F1A-01</div>
+          <div class="task-effort">4h</div>
+        </div>
+        <div class="task-title">Criar schema JSON da DSL de workflow templates (contrato declarativo de etapas, skills, aprovações e artefatos)</div>
+        <div class="task-bottom">
+          <div class="task-tags"><span class="tag tag-schema">Schema</span></div>
+          <div class="task-dep">Após Fase 0</div>
+        </div>
+        <div class="task-file">📄 schemas/workflow_template.json</div>
+      </div>
+
+      <div class="task-card critical">
+        <div class="task-top">
+          <div class="task-id">F1A-02</div>
+          <div class="task-effort">6h</div>
+        </div>
+        <div class="task-title">Criar modelos Pydantic: WorkflowRun, StepRun, ApprovalAction, RebriefAction</div>
+        <div class="task-bottom">
+          <div class="task-tags"><span class="tag tag-backend">Backend</span></div>
+          <div class="task-dep">Depende de F1A-01</div>
+        </div>
+        <div class="task-file">📄 api/models/workflow.py · api/models/step.py</div>
+      </div>
+
+      <div class="task-card important">
+        <div class="task-top">
+          <div class="task-id">F1A-03</div>
+          <div class="task-effort">6h</div>
+        </div>
+        <div class="task-title">Criar máquina de estados do workflow (transições válidas: draft → planned → in_progress → waiting_approval → completed)</div>
+        <div class="task-bottom">
+          <div class="task-tags"><span class="tag tag-backend">Backend</span></div>
+          <div class="task-dep">Depende de F1A-02</div>
+        </div>
+        <div class="task-file">📄 api/services/state_machine.py</div>
+      </div>
+
+      <div class="task-card important">
+        <div class="task-top">
+          <div class="task-id">F1A-04</div>
+          <div class="task-effort">4h</div>
+        </div>
+        <div class="task-title">Criar máquina de estados da step (pending → ready → running → waiting_approval → approved/rejected)</div>
+        <div class="task-bottom">
+          <div class="task-tags"><span class="tag tag-backend">Backend</span></div>
+          <div class="task-dep">Depende de F1A-03</div>
+        </div>
+        <div class="task-file">📄 api/services/state_machine.py</div>
+      </div>
+    </div>
+
+    <!-- 1B -->
+    <p style="font-size:12px; font-weight:700; color:#F5A623; text-transform:uppercase; letter-spacing:1px; margin: 20px 0 10px;">1B — Workflow Engine Service</p>
+    <div class="tasks-grid">
+      <div class="task-card critical">
+        <div class="task-top">
+          <div class="task-id">F1B-01</div>
+          <div class="task-effort">12h</div>
+        </div>
+        <div class="task-title">Criar WorkflowEngine: cria run, valida template, executa etapa, persiste estado, orquestra todo o ciclo de vida</div>
+        <div class="task-bottom">
+          <div class="task-tags"><span class="tag tag-backend">Backend</span></div>
+          <div class="task-dep">Depende de 1A completa</div>
+        </div>
+        <div class="task-file">📄 api/services/workflow_engine.py</div>
+      </div>
+
+      <div class="task-card important">
+        <div class="task-top">
+          <div class="task-id">F1B-02</div>
+          <div class="task-effort">4h</div>
+        </div>
+        <div class="task-title">Implementar lógica de avanço automático: aprovar etapa → disparar próxima skill automaticamente</div>
+        <div class="task-bottom">
+          <div class="task-tags"><span class="tag tag-backend">Backend</span></div>
+          <div class="task-dep">Depende de F1B-01</div>
+        </div>
+        <div class="task-file">📄 api/services/workflow_engine.py</div>
+      </div>
+
+      <div class="task-card important">
+        <div class="task-top">
+          <div class="task-id">F1B-03</div>
+          <div class="task-effort">6h</div>
+        </div>
+        <div class="task-title">Implementar lógica de rebrief: rerun_step, restart_from_step, restart_workflow</div>
+        <div class="task-bottom">
+          <div class="task-tags"><span class="tag tag-backend">Backend</span></div>
+          <div class="task-dep">Depende de F1B-02</div>
+        </div>
+        <div class="task-file">📄 api/services/workflow_engine.py</div>
+      </div>
+
+      <div class="task-card important">
+        <div class="task-top">
+          <div class="task-id">F1B-04</div>
+          <div class="task-effort">6h</div>
+        </div>
+        <div class="task-title">Criar sistema de persistência orientado a workflow (estrutura de pastas por cliente/workflow/run)</div>
+        <div class="task-bottom">
+          <div class="task-tags"><span class="tag tag-backend">Backend</span></div>
+          <div class="task-dep">Depende de F1B-01</div>
+        </div>
+        <div class="task-file">📄 api/services/workflow_store.py</div>
+      </div>
+    </div>
+
+    <!-- 1C -->
+    <p style="font-size:12px; font-weight:700; color:#F5A623; text-transform:uppercase; letter-spacing:1px; margin: 20px 0 10px;">1C — Novos Endpoints</p>
+    <div class="tasks-grid">
+      <div class="task-card critical">
+        <div class="task-top">
+          <div class="task-id">F1C-01</div>
+          <div class="task-effort">6h</div>
+        </div>
+        <div class="task-title">POST /workflow-runs — criar run, chamar AM, validar plano, executar etapa 1, parar em aprovação</div>
+        <div class="task-bottom">
+          <div class="task-tags"><span class="tag tag-backend">Backend</span></div>
+          <div class="task-dep">Depende de 1B completa</div>
+        </div>
+        <div class="task-file">📄 api/routes/workflows.py</div>
+      </div>
+
+      <div class="task-card normal">
+        <div class="task-top">
+          <div class="task-id">F1C-02</div>
+          <div class="task-effort">2h</div>
+        </div>
+        <div class="task-title">GET /workflow-runs/{run_id} — retornar estado completo com steps, artefatos e próxima ação</div>
+        <div class="task-bottom">
+          <div class="task-tags"><span class="tag tag-backend">Backend</span></div>
+          <div class="task-dep">Depende de F1C-01</div>
+        </div>
+        <div class="task-file">📄 api/routes/workflows.py</div>
+      </div>
+
+      <div class="task-card important">
+        <div class="task-top">
+          <div class="task-id">F1C-03</div>
+          <div class="task-effort">4h</div>
+        </div>
+        <div class="task-title">POST /.../approve, reject, rebrief — ações sobre steps com validação de estado</div>
+        <div class="task-bottom">
+          <div class="task-tags"><span class="tag tag-backend">Backend</span></div>
+          <div class="task-dep">Depende de F1C-01</div>
+        </div>
+        <div class="task-file">📄 api/routes/workflows.py</div>
+      </div>
+
+      <div class="task-card normal">
+        <div class="task-top">
+          <div class="task-id">F1C-04</div>
+          <div class="task-effort">2h</div>
+        </div>
+        <div class="task-title">GET /clients/{id}/workflow-runs — listar runs por cliente e tipo de task</div>
+        <div class="task-bottom">
+          <div class="task-tags"><span class="tag tag-backend">Backend</span></div>
+          <div class="task-dep">Depende de F1C-01</div>
+        </div>
+        <div class="task-file">📄 api/routes/workflows.py</div>
+      </div>
+    </div>
+
+    <!-- 1D -->
+    <p style="font-size:12px; font-weight:700; color:#F5A623; text-transform:uppercase; letter-spacing:1px; margin: 20px 0 10px;">1D — Account Manager Upgrade</p>
+    <div class="tasks-grid">
+      <div class="task-card critical">
+        <div class="task-top">
+          <div class="task-id">F1D-01</div>
+          <div class="task-effort">6h</div>
+        </div>
+        <div class="task-title">AM retorna Runtime Plan completo (template_id, selected_pipeline, steps, required_context, artifacts)</div>
+        <div class="task-bottom">
+          <div class="task-tags"><span class="tag tag-backend">Backend</span></div>
+          <div class="task-dep">Depende de 1A completa</div>
+        </div>
+        <div class="task-file">📄 api/services/orchestrator.py</div>
+      </div>
+
+      <div class="task-card important">
+        <div class="task-top">
+          <div class="task-id">F1D-02</div>
+          <div class="task-effort">4h</div>
+        </div>
+        <div class="task-title">Backend valida plano do AM contra o template registry antes de executar qualquer step</div>
+        <div class="task-bottom">
+          <div class="task-tags"><span class="tag tag-backend">Backend</span></div>
+          <div class="task-dep">Depende de F1D-01</div>
+        </div>
+        <div class="task-file">📄 api/services/workflow_engine.py</div>
+      </div>
+
+      <div class="task-card important">
+        <div class="task-top">
+          <div class="task-id">F1D-03</div>
+          <div class="task-effort">4h</div>
+        </div>
+        <div class="task-title">AM gera briefing específico POR ETAPA (não mais briefing único global para todo o pipeline)</div>
+        <div class="task-bottom">
+          <div class="task-tags"><span class="tag tag-backend">Backend</span></div>
+          <div class="task-dep">Depende de F1D-01</div>
+        </div>
+        <div class="task-file">📄 api/services/orchestrator.py</div>
+      </div>
+    </div>
+
+    <div class="acceptance">
+      <strong>✓ Critério de aceite:</strong> Criar workflow run de landing page via API, aprovar briefing, ver copy ser gerada automaticamente, aprovar copy, ver design ser gerado.
+    </div>
+  </div>
+
+  <!-- ════════════ FASE 2 ════════════ -->
+  <div class="phase-section phase-2">
+    <div class="phase-header">
+      <div class="phase-badge">Fase 2</div>
+      <div class="phase-title">Frontend Stateful</div>
+      <div class="phase-meta">
+        <span>⏱ 1–2 semanas</span>
+        <span>📦 11 tarefas</span>
+        <span>~40h esforço</span>
+      </div>
+    </div>
+
+    <div class="tasks-grid">
+      <div class="task-card critical">
+        <div class="task-top">
+          <div class="task-id">F2A-01</div>
+          <div class="task-effort">6h</div>
+        </div>
+        <div class="task-title">Criar componente WorkflowTimeline — barra horizontal com status visual por etapa</div>
+        <div class="task-bottom">
+          <div class="task-tags"><span class="tag tag-frontend">Frontend</span></div>
+          <div class="task-dep">Depende de Fase 1</div>
+        </div>
+        <div class="task-file">📄 components/WorkflowTimeline.tsx</div>
+      </div>
+
+      <div class="task-card critical">
+        <div class="task-top">
+          <div class="task-id">F2A-02</div>
+          <div class="task-effort">6h</div>
+        </div>
+        <div class="task-title">Criar componente StepCard — nome, status, skill primária, artefato gerado, botões aprovar/rejeitar/rebriefar</div>
+        <div class="task-bottom">
+          <div class="task-tags"><span class="tag tag-frontend">Frontend</span></div>
+          <div class="task-dep">Depende de F2A-01</div>
+        </div>
+        <div class="task-file">📄 components/StepCard.tsx</div>
+      </div>
+
+      <div class="task-card important">
+        <div class="task-top">
+          <div class="task-id">F2A-03</div>
+          <div class="task-effort">4h</div>
+        </div>
+        <div class="task-title">Criar WorkflowHeader — 3 blocos: workflow acionado, etapa atual + próxima skill, skills usadas no material</div>
+        <div class="task-bottom">
+          <div class="task-tags"><span class="tag tag-frontend">Frontend</span></div>
+          <div class="task-dep">Depende de F2A-01</div>
+        </div>
+        <div class="task-file">📄 components/WorkflowHeader.tsx</div>
+      </div>
+
+      <div class="task-card important">
+        <div class="task-top">
+          <div class="task-id">F2A-04</div>
+          <div class="task-effort">4h</div>
+        </div>
+        <div class="task-title">Criar modal de Rebrief — campo de feedback textual + seleção de modo (rerun step / restart from / full restart)</div>
+        <div class="task-bottom">
+          <div class="task-tags"><span class="tag tag-frontend">Frontend</span></div>
+          <div class="task-dep">Depende de F2A-02</div>
+        </div>
+        <div class="task-file">📄 components/RebriefModal.tsx</div>
+      </div>
+
+      <div class="task-card important">
+        <div class="task-top">
+          <div class="task-id">F2B-01</div>
+          <div class="task-effort">4h</div>
+        </div>
+        <div class="task-title">Criar página /workspace/workflows — listagem de workflow runs do cliente selecionado</div>
+        <div class="task-bottom">
+          <div class="task-tags"><span class="tag tag-frontend">Frontend</span></div>
+          <div class="task-dep">Depende de 2A completa</div>
+        </div>
+        <div class="task-file">📄 app/(app)/workflows/page.tsx</div>
+      </div>
+
+      <div class="task-card critical">
+        <div class="task-top">
+          <div class="task-id">F2B-02</div>
+          <div class="task-effort">6h</div>
+        </div>
+        <div class="task-title">Criar página /workspace/workflows/{id} — detalhe com timeline, cards de etapas e streaming do output</div>
+        <div class="task-bottom">
+          <div class="task-tags"><span class="tag tag-frontend">Frontend</span></div>
+          <div class="task-dep">Depende de F2B-01</div>
+        </div>
+        <div class="task-file">📄 app/(app)/workflows/[id]/page.tsx</div>
+      </div>
+
+      <div class="task-card important">
+        <div class="task-top">
+          <div class="task-id">F2B-03</div>
+          <div class="task-effort">3h</div>
+        </div>
+        <div class="task-title">Integrar API client com novos endpoints de workflow (createRun, getRun, approve, reject, rebrief)</div>
+        <div class="task-bottom">
+          <div class="task-tags"><span class="tag tag-frontend">Frontend</span></div>
+          <div class="task-dep">Depende de Fase 1</div>
+        </div>
+        <div class="task-file">📄 lib/api.ts</div>
+      </div>
+
+      <div class="task-card normal">
+        <div class="task-top">
+          <div class="task-id">F2B-04</div>
+          <div class="task-effort">4h</div>
+        </div>
+        <div class="task-title">Implementar polling ou SSE no frontend para atualizar estado do workflow em tempo real</div>
+        <div class="task-bottom">
+          <div class="task-tags"><span class="tag tag-frontend">Frontend</span></div>
+          <div class="task-dep">Depende de F2B-03</div>
+        </div>
+        <div class="task-file">📄 lib/api.ts + hooks/useWorkflowPolling.ts</div>
+      </div>
+
+      <div class="task-card normal">
+        <div class="task-top">
+          <div class="task-id">F2B-05</div>
+          <div class="task-effort">2h</div>
+        </div>
+        <div class="task-title">Adaptar Sidebar para incluir seção "Workflows" com badge de aprovações pendentes</div>
+        <div class="task-bottom">
+          <div class="task-tags"><span class="tag tag-frontend">Frontend</span></div>
+          <div class="task-dep">Depende de F2B-01</div>
+        </div>
+        <div class="task-file">📄 components/Sidebar.tsx</div>
+      </div>
+
+      <div class="task-card normal">
+        <div class="task-top">
+          <div class="task-id">F2C-01</div>
+          <div class="task-effort">2h</div>
+        </div>
+        <div class="task-title">Manter endpoints /generate/* funcionando como atalho de geração rápida (single-step)</div>
+        <div class="task-bottom">
+          <div class="task-tags"><span class="tag tag-backend">Backend</span></div>
+          <div class="task-dep">Depende de Fase 1</div>
+        </div>
+        <div class="task-file">📄 api/routes/generate.py</div>
+      </div>
+
+      <div class="task-card normal">
+        <div class="task-top">
+          <div class="task-id">F2C-02</div>
+          <div class="task-effort">1h</div>
+        </div>
+        <div class="task-title">Páginas antigas (hooks, copy, calendar, ads, scripts) continuam operando via /generate/*</div>
+        <div class="task-bottom">
+          <div class="task-tags"><span class="tag tag-frontend">Frontend</span></div>
+          <div class="task-dep">Depende de F2C-01</div>
+        </div>
+        <div class="task-file">📄 páginas existentes</div>
+      </div>
+    </div>
+
+    <div class="acceptance">
+      <strong>✓ Critério de aceite:</strong> Usuário cria task no browser, vê timeline, aprova briefing com um clique, acompanha geração da copy em tempo real, rejeita e rebriefa com feedback.
+    </div>
+  </div>
+
+  <!-- ════════════ FASE 3 ════════════ -->
+  <div class="phase-section phase-3">
+    <div class="phase-header">
+      <div class="phase-badge">Fase 3</div>
+      <div class="phase-title">Workflow Registry e Templates</div>
+      <div class="phase-meta">
+        <span>⏱ 1 semana</span>
+        <span>📦 8 tarefas</span>
+        <span>~24h esforço</span>
+      </div>
+    </div>
+
+    <div class="tasks-grid">
+      <div class="task-card critical">
+        <div class="task-top">
+          <div class="task-id">F3-01</div>
+          <div class="task-effort">3h</div>
+        </div>
+        <div class="task-title">Criar template landing-page-v1.json — Briefing → Copy → Design → Final Review</div>
+        <div class="task-bottom">
+          <div class="task-tags"><span class="tag tag-template">Template</span></div>
+          <div class="task-dep">Depende de Fase 1</div>
+        </div>
+        <div class="task-file">📄 templates/landing-page-v1.json</div>
+      </div>
+
+      <div class="task-card normal">
+        <div class="task-top">
+          <div class="task-id">F3-02</div>
+          <div class="task-effort">2h</div>
+        </div>
+        <div class="task-title">Criar template ads-creative-v1.json — Briefing → Copy Ads → Design Criativo</div>
+        <div class="task-bottom">
+          <div class="task-tags"><span class="tag tag-template">Template</span></div>
+          <div class="task-dep">Depende de F3-01</div>
+        </div>
+        <div class="task-file">📄 templates/ads-creative-v1.json</div>
+      </div>
+
+      <div class="task-card normal">
+        <div class="task-top">
+          <div class="task-id">F3-03</div>
+          <div class="task-effort">2h</div>
+        </div>
+        <div class="task-title">Criar template instagram-carousel-v1.json — Briefing → Hook → Carousel → Design</div>
+        <div class="task-bottom">
+          <div class="task-tags"><span class="tag tag-template">Template</span></div>
+          <div class="task-dep">Depende de F3-01</div>
+        </div>
+        <div class="task-file">📄 templates/instagram-carousel-v1.json</div>
+      </div>
+
+      <div class="task-card normal">
+        <div class="task-top">
+          <div class="task-id">F3-04</div>
+          <div class="task-effort">2h</div>
+        </div>
+        <div class="task-title">Criar template reels-script-v1.json — Briefing → Hook → Script → Brief Design</div>
+        <div class="task-bottom">
+          <div class="task-tags"><span class="tag tag-template">Template</span></div>
+          <div class="task-dep">Depende de F3-01</div>
+        </div>
+        <div class="task-file">📄 templates/reels-script-v1.json</div>
+      </div>
+
+      <div class="task-card normal">
+        <div class="task-top">
+          <div class="task-id">F3-05</div>
+          <div class="task-effort">3h</div>
+        </div>
+        <div class="task-title">Criar template editorial-calendar-v1.json — Briefing → Pilares → Calendário → Aprovação peça a peça</div>
+        <div class="task-bottom">
+          <div class="task-tags"><span class="tag tag-template">Template</span></div>
+          <div class="task-dep">Depende de F3-01</div>
+        </div>
+        <div class="task-file">📄 templates/editorial-calendar-v1.json</div>
+      </div>
+
+      <div class="task-card normal">
+        <div class="task-top">
+          <div class="task-id">F3-06</div>
+          <div class="task-effort">2h</div>
+        </div>
+        <div class="task-title">Criar template brand-system-v1.json — Brand Intel → Brand System Builder</div>
+        <div class="task-bottom">
+          <div class="task-tags"><span class="tag tag-template">Template</span></div>
+          <div class="task-dep">Depende de F3-01</div>
+        </div>
+        <div class="task-file">📄 templates/brand-system-v1.json</div>
+      </div>
+
+      <div class="task-card critical">
+        <div class="task-top">
+          <div class="task-id">F3-07</div>
+          <div class="task-effort">6h</div>
+        </div>
+        <div class="task-title">Implementar Template Registry Service — carregar, validar e versionar templates automaticamente</div>
+        <div class="task-bottom">
+          <div class="task-tags"><span class="tag tag-backend">Backend</span></div>
+          <div class="task-dep">Depende de F3-01</div>
+        </div>
+        <div class="task-file">📄 api/services/template_registry.py</div>
+      </div>
+
+      <div class="task-card important">
+        <div class="task-top">
+          <div class="task-id">F3-08</div>
+          <div class="task-effort">4h</div>
+        </div>
+        <div class="task-title">Tela de seleção de workflow no frontend — usuário escolhe template ao criar nova task</div>
+        <div class="task-bottom">
+          <div class="task-tags"><span class="tag tag-frontend">Frontend</span></div>
+          <div class="task-dep">Depende de F3-07 + Fase 2</div>
+        </div>
+        <div class="task-file">📄 components/WorkflowSelector.tsx</div>
+      </div>
+    </div>
+
+    <div class="acceptance">
+      <strong>✓ Critério de aceite:</strong> Adicionar um novo template JSON e ele aparecer automaticamente como opção no frontend sem deploy de código.
+    </div>
+  </div>
+
+  <!-- ════════════ FASE 4 ════════════ -->
+  <div class="phase-section phase-4">
+    <div class="phase-header">
+      <div class="phase-badge">Fase 4</div>
+      <div class="phase-title">Persistência e Observabilidade</div>
+      <div class="phase-meta">
+        <span>⏱ 1 semana</span>
+        <span>📦 6 tarefas</span>
+        <span>~32h esforço</span>
+      </div>
+    </div>
+
+    <div class="tasks-grid">
+      <div class="task-card critical">
+        <div class="task-top">
+          <div class="task-id">F4-01</div>
+          <div class="task-effort">12h</div>
+        </div>
+        <div class="task-title">Migrar storage de filesystem local para Supabase (PostgreSQL) — workflows, steps e artefatos</div>
+        <div class="task-bottom">
+          <div class="task-tags"><span class="tag tag-backend">Backend</span><span class="tag tag-database">Database</span></div>
+          <div class="task-dep">Depende de Fase 1</div>
+        </div>
+        <div class="task-file">📄 api/services/workflow_store.py · output_store.py</div>
+      </div>
+
+      <div class="task-card critical">
+        <div class="task-top">
+          <div class="task-id">F4-02</div>
+          <div class="task-effort">4h</div>
+        </div>
+        <div class="task-title">Criar tabelas: workflow_runs, step_runs, approvals, artifacts, clients, events</div>
+        <div class="task-bottom">
+          <div class="task-tags"><span class="tag tag-database">Database</span></div>
+          <div class="task-dep">Depende de F4-01</div>
+        </div>
+        <div class="task-file">📄 migrations/001_initial.sql</div>
+      </div>
+
+      <div class="task-card important">
+        <div class="task-top">
+          <div class="task-id">F4-03</div>
+          <div class="task-effort">4h</div>
+        </div>
+        <div class="task-title">Implementar event log estruturado (events.ndjson → tabela events no Supabase)</div>
+        <div class="task-bottom">
+          <div class="task-tags"><span class="tag tag-backend">Backend</span></div>
+          <div class="task-dep">Depende de F4-02</div>
+        </div>
+        <div class="task-file">📄 api/services/event_logger.py</div>
+      </div>
+
+      <div class="task-card normal">
+        <div class="task-top">
+          <div class="task-id">F4-04</div>
+          <div class="task-effort">3h</div>
+        </div>
+        <div class="task-title">Adicionar rate limiting por cliente/usuário nos endpoints de geração</div>
+        <div class="task-bottom">
+          <div class="task-tags"><span class="tag tag-backend">Backend</span></div>
+          <div class="task-dep">Sem dependência</div>
+        </div>
+        <div class="task-file">📄 api/middleware/rate_limiter.py</div>
+      </div>
+
+      <div class="task-card normal">
+        <div class="task-top">
+          <div class="task-id">F4-05</div>
+          <div class="task-effort">3h</div>
+        </div>
+        <div class="task-title">Implementar circuit breaker para chamadas à OpenAI (evitar cascata de falhas)</div>
+        <div class="task-bottom">
+          <div class="task-tags"><span class="tag tag-backend">Backend</span></div>
+          <div class="task-dep">Sem dependência</div>
+        </div>
+        <div class="task-file">📄 api/services/llm_client.py</div>
+      </div>
+
+      <div class="task-card important">
+        <div class="task-top">
+          <div class="task-id">F4-06</div>
+          <div class="task-effort">6h</div>
+        </div>
+        <div class="task-title">Dashboard de observabilidade — workflows criados, aprovados, rejeitados, tempo médio por etapa</div>
+        <div class="task-bottom">
+          <div class="task-tags"><span class="tag tag-frontend">Frontend</span></div>
+          <div class="task-dep">Depende de F4-01 a F4-03</div>
+        </div>
+        <div class="task-file">📄 app/(app)/dashboard/page.tsx</div>
+      </div>
+    </div>
+
+    <div class="acceptance">
+      <strong>✓ Critério de aceite:</strong> Deploy no Railway, criar 3 workflow runs, reiniciar instância e confirmar que todos os dados persistiram.
+    </div>
+  </div>
+
+  <!-- Summary Table -->
+  <h2 style="font-size: 16px; font-weight: 700; color: #fff; margin-top: 40px; margin-bottom: 16px;">Resumo por Fase</h2>
+
+  <table class="summary-table">
+    <thead>
+      <tr>
+        <th>Fase</th>
+        <th>Tarefas</th>
+        <th>Esforço</th>
+        <th>Tempo</th>
+        <th>Progresso</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><strong style="color:#16C79A">Fase 0</strong> — Quick Wins</td>
+        <td>5</td>
+        <td>~21h</td>
+        <td>2–3 dias</td>
+        <td><div class="bar"><div class="bar-fill bar-green" style="width:0%"></div></div></td>
+      </tr>
+      <tr>
+        <td><strong style="color:#F5A623">Fase 1</strong> — Workflow Engine</td>
+        <td>15</td>
+        <td>~80h</td>
+        <td>1–2 semanas</td>
+        <td><div class="bar"><div class="bar-fill bar-orange" style="width:0%"></div></div></td>
+      </tr>
+      <tr>
+        <td><strong style="color:#F5A623">Fase 2</strong> — Frontend Stateful</td>
+        <td>11</td>
+        <td>~42h</td>
+        <td>1–2 semanas</td>
+        <td><div class="bar"><div class="bar-fill bar-orange" style="width:0%"></div></div></td>
+      </tr>
+      <tr>
+        <td><strong style="color:#16C79A">Fase 3</strong> — Templates</td>
+        <td>8</td>
+        <td>~24h</td>
+        <td>1 semana</td>
+        <td><div class="bar"><div class="bar-fill bar-green" style="width:0%"></div></div></td>
+      </tr>
+      <tr>
+        <td><strong style="color:#E94560">Fase 4</strong> — Persistência</td>
+        <td>6</td>
+        <td>~32h</td>
+        <td>1 semana</td>
+        <td><div class="bar"><div class="bar-fill bar-red" style="width:0%"></div></div></td>
+      </tr>
+      <tr>
+        <td><strong style="color:#fff">TOTAL</strong></td>
+        <td><strong style="color:#fff">45</strong></td>
+        <td><strong style="color:#fff">~199h</strong></td>
+        <td><strong style="color:#fff">4–6 semanas</strong></td>
+        <td></td>
+      </tr>
+    </tbody>
+  </table>
+
+</div>
+
+</body>
+</html>

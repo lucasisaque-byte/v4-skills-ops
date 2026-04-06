@@ -66,6 +66,8 @@ Siga este schema exato:
 - O briefing é a instrução direta para a skill especializada: seja preciso e acionável
 - Para steps com `primary_skill: account-manager`, o briefing deve ser o plano estratégico completo
 
+Responda APENAS com o JSON, sem markdown, sem blocos de código, sem texto adicional.
+
 """
 
 
@@ -131,17 +133,14 @@ def plan_workflow(
 
     user_message = "\n\n".join(user_parts)
 
-    response = _client().chat.completions.create(
+    response = _client().messages.create(
         model=MODEL,
         max_tokens=2000,
-        response_format={"type": "json_object"},
-        messages=[
-            {"role": "system", "content": system_prompt},
-            {"role": "user", "content": user_message},
-        ],
+        system=system_prompt,
+        messages=[{"role": "user", "content": user_message}],
     )
 
-    raw = response.choices[0].message.content
+    raw = response.content[0].text
     return _parse_runtime_plan(raw, task_type)
 
 

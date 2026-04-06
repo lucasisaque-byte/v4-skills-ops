@@ -1,0 +1,602 @@
+[
+  {
+    "path": "api/",
+    "type": "directory",
+    "current_role_hypothesis": "Backend FastAPI — entrega HTTP da plataforma. Contém rotas, services, modelos e workflow engine.",
+    "classification": "KEEP_CORE",
+    "recommended_action": "Manter. Em fase 3, extrair workflow/ e models/workflow.py para packages/ separados.",
+    "target_location": "apps/api/ (fase 4, alto risco) ou manter em api/ (conservador)",
+    "confidence": "high",
+    "notes": "Ponto de entrada do backend. Não mover antes de garantir testes de smoke e atualização de Procfile."
+  },
+  {
+    "path": "api/main.py",
+    "type": "file",
+    "current_role_hypothesis": "Entry point FastAPI. Registra routers, CORS e endpoints de health.",
+    "classification": "KEEP_CORE",
+    "recommended_action": "Manter.",
+    "target_location": "api/main.py",
+    "confidence": "high",
+    "notes": null
+  },
+  {
+    "path": "api/routes/generate.py",
+    "type": "file",
+    "current_role_hypothesis": "Endpoints legados /generate/* para compatibilidade com frontend antigo.",
+    "classification": "KEEP_SUPPORT",
+    "recommended_action": "Manter para compatibilidade. Documentar como deprecated e planejar remoção após migração completa para /workflow-runs.",
+    "target_location": "api/routes/generate.py",
+    "confidence": "high",
+    "notes": "Ainda usado pelo frontend para hooks, copy, calendar, ads, reel-script nos workspaces específicos."
+  },
+  {
+    "path": "api/routes/workflow_runs.py",
+    "type": "file",
+    "current_role_hypothesis": "Endpoints principais do novo sistema stateful de workflows.",
+    "classification": "KEEP_CORE",
+    "recommended_action": "Manter e evoluir.",
+    "target_location": "api/routes/workflow_runs.py",
+    "confidence": "high",
+    "notes": null
+  },
+  {
+    "path": "api/routes/clients.py",
+    "type": "file",
+    "current_role_hypothesis": "CRUD de listagem de clientes.",
+    "classification": "KEEP_CORE",
+    "recommended_action": "Manter.",
+    "target_location": "api/routes/clients.py",
+    "confidence": "high",
+    "notes": null
+  },
+  {
+    "path": "api/routes/outputs.py",
+    "type": "file",
+    "current_role_hypothesis": "Endpoints de histórico de outputs do sistema legado.",
+    "classification": "KEEP_SUPPORT",
+    "recommended_action": "Manter por enquanto. Consolidar com workflow-runs em fase posterior.",
+    "target_location": "api/routes/outputs.py",
+    "confidence": "high",
+    "notes": null
+  },
+  {
+    "path": "api/services/orchestrator.py",
+    "type": "file",
+    "current_role_hypothesis": "Orquestrador principal — carrega SKILL.md do AM, chama OpenAI, retorna RuntimePlan.",
+    "classification": "REFACTOR",
+    "recommended_action": "Mover para packages/workflow-engine/ em fase 3. Lógica de domínio não deve ficar em services/ de entrega.",
+    "target_location": "packages/workflow-engine/orchestrator.py",
+    "confidence": "high",
+    "notes": "É o sistema ativo. Não mover antes de resolver imports."
+  },
+  {
+    "path": "api/services/skill_runner.py",
+    "type": "file",
+    "current_role_hypothesis": "Executor de skills — carrega SKILL.md, chama OpenAI com streaming.",
+    "classification": "KEEP_CORE",
+    "recommended_action": "Manter em api/services/. Considerar mover para packages/skill-runtime/ em fase 3.",
+    "target_location": "packages/skill-runtime/runner.py (futuro)",
+    "confidence": "high",
+    "notes": null
+  },
+  {
+    "path": "api/services/client_context.py",
+    "type": "file",
+    "current_role_hypothesis": "Carrega DCC, UCM e brand de clients/. Hardcoded display_name mapping.",
+    "classification": "KEEP_CORE",
+    "recommended_action": "Manter. Refatorar _display_name() para ler de metadata nos próprios arquivos do cliente.",
+    "target_location": "api/services/client_context.py",
+    "confidence": "high",
+    "notes": "Tem acoplamento com estrutura de clients/ — qualquer mudança de estrutura dos clientes deve ser validada aqui."
+  },
+  {
+    "path": "api/services/output_store.py",
+    "type": "file",
+    "current_role_hypothesis": "Persistência legada de outputs em outputs/{client_id}/entries.json.",
+    "classification": "REFACTOR",
+    "recommended_action": "Consolidar com artifact store do engine de workflow. A dualidade de persistência é um débito técnico.",
+    "target_location": "packages/artifact-store/ (fase 3)",
+    "confidence": "high",
+    "notes": "Escreve em outputs/ no filesystem. Dados commitados se o usuário fizer git add. Comportamento perigoso."
+  },
+  {
+    "path": "api/models/workflow.py",
+    "type": "file",
+    "current_role_hypothesis": "Modelos Pydantic do domínio — WorkflowRun, RuntimePlan, StepRun, templates, etc.",
+    "classification": "REFACTOR",
+    "recommended_action": "Mover para packages/workflow-engine/models.py. Modelos de domínio não devem ficar dentro do módulo de entrega.",
+    "target_location": "packages/workflow-engine/models.py",
+    "confidence": "high",
+    "notes": null
+  },
+  {
+    "path": "api/workflow/engine.py",
+    "type": "file",
+    "current_role_hypothesis": "State machine do workflow — cria, persiste e avança WorkflowRuns. Escreve em data/.",
+    "classification": "REFACTOR",
+    "recommended_action": "Mover para packages/workflow-engine/. É pure domain logic.",
+    "target_location": "packages/workflow-engine/engine.py",
+    "confidence": "high",
+    "notes": "DATA_DIR aponta para data/ que não existe no repo. WorkflowRuns são efêmeros em produção."
+  },
+  {
+    "path": "api/workflow/registry.py",
+    "type": "file",
+    "current_role_hypothesis": "Registry de templates — carrega, valida e lista WorkflowTemplates.",
+    "classification": "REFACTOR",
+    "recommended_action": "Mover junto com templates para packages/workflow-templates/.",
+    "target_location": "packages/workflow-templates/registry.py",
+    "confidence": "high",
+    "notes": null
+  },
+  {
+    "path": "api/workflow/grammar.json",
+    "type": "file",
+    "current_role_hypothesis": "Gramática universal que define a estrutura válida de um WorkflowTemplate.",
+    "classification": "KEEP_CORE",
+    "recommended_action": "Manter junto com os templates. Mover para packages/workflow-templates/ em fase 3.",
+    "target_location": "packages/workflow-templates/grammar.json",
+    "confidence": "high",
+    "notes": "É o contrato de validação de todos os templates. Crítico."
+  },
+  {
+    "path": "api/workflow/templates/landing-page-v1.json",
+    "type": "file",
+    "current_role_hypothesis": "Template de workflow completo para Landing Page (5 steps, 3 approval gates).",
+    "classification": "KEEP_CORE",
+    "recommended_action": "Manter. Mover para packages/workflow-templates/templates/ em fase 3.",
+    "target_location": "packages/workflow-templates/templates/landing-page-v1.json",
+    "confidence": "high",
+    "notes": null
+  },
+  {
+    "path": "api/workflow/templates/hooks-v1.json",
+    "type": "file",
+    "current_role_hypothesis": "Template para geração de hooks.",
+    "classification": "KEEP_CORE",
+    "recommended_action": "Manter. Mover em fase 3.",
+    "target_location": "packages/workflow-templates/templates/hooks-v1.json",
+    "confidence": "high",
+    "notes": null
+  },
+  {
+    "path": "api/workflow/templates/copy-lp-v1.json",
+    "type": "file",
+    "current_role_hypothesis": "Template para copy de LP.",
+    "classification": "KEEP_CORE",
+    "recommended_action": "Manter.",
+    "target_location": "packages/workflow-templates/templates/copy-lp-v1.json",
+    "confidence": "high",
+    "notes": null
+  },
+  {
+    "path": "api/workflow/templates/ads-creative-v1.json",
+    "type": "file",
+    "current_role_hypothesis": "Template para criativos de ads.",
+    "classification": "KEEP_CORE",
+    "recommended_action": "Manter.",
+    "target_location": "packages/workflow-templates/templates/ads-creative-v1.json",
+    "confidence": "high",
+    "notes": null
+  },
+  {
+    "path": "api/workflow/templates/calendar-v1.json",
+    "type": "file",
+    "current_role_hypothesis": "Template para calendário editorial.",
+    "classification": "KEEP_CORE",
+    "recommended_action": "Manter.",
+    "target_location": "packages/workflow-templates/templates/calendar-v1.json",
+    "confidence": "high",
+    "notes": null
+  },
+  {
+    "path": "api/workflow/templates/reel-script-v1.json",
+    "type": "file",
+    "current_role_hypothesis": "Template para script de Reels.",
+    "classification": "KEEP_CORE",
+    "recommended_action": "Manter.",
+    "target_location": "packages/workflow-templates/templates/reel-script-v1.json",
+    "confidence": "high",
+    "notes": null
+  },
+  {
+    "path": "api/workflow/templates/brand-system-v1.json",
+    "type": "file",
+    "current_role_hypothesis": "Template para brand system.",
+    "classification": "KEEP_CORE",
+    "recommended_action": "Manter.",
+    "target_location": "packages/workflow-templates/templates/brand-system-v1.json",
+    "confidence": "high",
+    "notes": null
+  },
+  {
+    "path": "agent/",
+    "type": "directory",
+    "current_role_hypothesis": "Protótipo inicial da plataforma usando Anthropic SDK (Claude). Pipeline Copy→Designer→Social hardcoded. Não integrado à plataforma ativa.",
+    "classification": "ARCHIVE",
+    "recommended_action": "Mover para archive/prototypes/agent-v0/. Não deletar ainda — tem valor histórico da lógica de pipeline v1.",
+    "target_location": "archive/prototypes/agent-v0/",
+    "confidence": "high",
+    "notes": "Referencia skills/social-media/SKILL.md que não existe (é skills/social-media-manager/). Confirma abandono."
+  },
+  {
+    "path": "platform/",
+    "type": "directory",
+    "current_role_hypothesis": "Frontend Next.js 14 — UI completa da plataforma com kanban, workspace, approval, run page.",
+    "classification": "KEEP_CORE",
+    "recommended_action": "Manter. Mover para apps/web/ apenas em fase 4 (alto risco de quebra do Vercel).",
+    "target_location": "apps/web/ (fase 4) ou platform/ (conservador)",
+    "confidence": "high",
+    "notes": null
+  },
+  {
+    "path": "platform/tsconfig.tsbuildinfo",
+    "type": "file",
+    "current_role_hypothesis": "Build artifact do TypeScript. Não deve ser commitado.",
+    "classification": "DELETE_CANDIDATE",
+    "recommended_action": "Adicionar ao .gitignore e remover do tracking.",
+    "target_location": null,
+    "confidence": "high",
+    "notes": null
+  },
+  {
+    "path": "skills/",
+    "type": "directory",
+    "current_role_hypothesis": "Knowledge base de 18 skills especializadas. Cada skill é carregada como system prompt.",
+    "classification": "KEEP_CORE",
+    "recommended_action": "Manter estrutura atual. Não renomear pastas — os nomes são usados como identificadores em código.",
+    "target_location": "skills/",
+    "confidence": "high",
+    "notes": "Os nomes de pasta são usados diretamente em skill_runner.py via load_skill(skill_name). Qualquer renomeação quebra a API."
+  },
+  {
+    "path": "skills/account-manager/",
+    "type": "directory",
+    "current_role_hypothesis": "Skill mais complexa — orquestrador com SKILL.md rico (195 linhas) + 17 arquivos de referência.",
+    "classification": "KEEP_CORE",
+    "recommended_action": "Manter.",
+    "target_location": "skills/account-manager/",
+    "confidence": "high",
+    "notes": "Já integrado como system prompt do orchestrator.py via _build_am_system_prompt()."
+  },
+  {
+    "path": "skills/frontend-design/LICENSE.txt",
+    "type": "file",
+    "current_role_hypothesis": "Arquivo de licença — incomum para uma skill interna. Sugere origem em repositório externo.",
+    "classification": "KEEP_SUPPORT",
+    "recommended_action": "Verificar licença. Se for MIT ou permissiva para uso comercial, manter. Se restritiva, avaliar.",
+    "target_location": "skills/frontend-design/LICENSE.txt",
+    "confidence": "low",
+    "notes": "Baixa confiança — não foi possível ler o conteúdo do arquivo nesta auditoria."
+  },
+  {
+    "path": "skills/social-media-manager/",
+    "type": "directory",
+    "current_role_hypothesis": "Orquestrador de social media — roteia para 9 micro-skills. Documentado mas não integrado diretamente na API.",
+    "classification": "KEEP_CORE",
+    "recommended_action": "Manter. Criar workflow template para 'social_media' que use esta skill como AM especializado.",
+    "target_location": "skills/social-media-manager/",
+    "confidence": "high",
+    "notes": "Tem mapa completo de decisão. É a skill que deve orquestrar carrossel, stories, calendário, etc."
+  },
+  {
+    "path": "clients/",
+    "type": "directory",
+    "current_role_hypothesis": "Contexto operacional de clientes — DCC, UCM, brand system, outputs.",
+    "classification": "REFACTOR",
+    "recommended_action": "Limpar arquivos Obsidian, normalizar estrutura entre clientes, separar outputs em pasta dedicada.",
+    "target_location": "clients/",
+    "confidence": "high",
+    "notes": null
+  },
+  {
+    "path": "clients/.obsidian/",
+    "type": "directory",
+    "current_role_hypothesis": "Configuração do vault Obsidian. Ferramenta pessoal de edição, não pertence ao repositório.",
+    "classification": "DELETE_CANDIDATE",
+    "recommended_action": "Remover via git rm -r --cached. Adicionar clients/.obsidian ao .gitignore.",
+    "target_location": null,
+    "confidence": "high",
+    "notes": null
+  },
+  {
+    "path": "clients/Sem título.base",
+    "type": "file",
+    "current_role_hypothesis": "Arquivo de banco de dados do Obsidian (bases/tables). Ferramenta pessoal.",
+    "classification": "DELETE_CANDIDATE",
+    "recommended_action": "Remover.",
+    "target_location": null,
+    "confidence": "high",
+    "notes": null
+  },
+  {
+    "path": "clients/Sem título.canvas",
+    "type": "file",
+    "current_role_hypothesis": "Canvas visual do Obsidian. Ferramenta pessoal.",
+    "classification": "DELETE_CANDIDATE",
+    "recommended_action": "Remover.",
+    "target_location": null,
+    "confidence": "high",
+    "notes": null
+  },
+  {
+    "path": "clients/_template/",
+    "type": "directory",
+    "current_role_hypothesis": "Template de estrutura padrão para novos clientes.",
+    "classification": "KEEP_SUPPORT",
+    "recommended_action": "Manter e expandir — adicionar brand/ com design-tokens.json template.",
+    "target_location": "clients/_template/",
+    "confidence": "high",
+    "notes": "Ignorado pelo list_clients() por começar com '_'. Correto."
+  },
+  {
+    "path": "clients/kce/dcc.md",
+    "type": "file",
+    "current_role_hypothesis": "DCC do cliente KCE — localização correta, raiz do cliente.",
+    "classification": "KEEP_CORE",
+    "recommended_action": "Manter. Verificar se está mais atualizado que copywriting/kce-dcc.md.",
+    "target_location": "clients/kce/dcc.md",
+    "confidence": "high",
+    "notes": null
+  },
+  {
+    "path": "clients/kce/copywriting/kce-dcc.md",
+    "type": "file",
+    "current_role_hypothesis": "DCC duplicado do KCE em localização não-padrão.",
+    "classification": "MERGE",
+    "recommended_action": "Comparar conteúdo com clients/kce/dcc.md. Manter apenas o mais atualizado em clients/kce/dcc.md. Remover esta cópia.",
+    "target_location": null,
+    "confidence": "medium",
+    "notes": "rglob no client_context.py retorna primeiro match — pode ser que esta versão esteja sendo usada ao invés de kce/dcc.md. Verificar."
+  },
+  {
+    "path": "clients/kce/copywriting/ucm-kce/",
+    "type": "directory",
+    "current_role_hypothesis": "UCM do cliente KCE em formato de pasta/subdiretório ao invés de arquivo único.",
+    "classification": "REFACTOR",
+    "recommended_action": "Consolidar em clients/kce/ucm.md para seguir o padrão. Verificar estrutura interna antes.",
+    "target_location": "clients/kce/ucm.md",
+    "confidence": "medium",
+    "notes": "rglob *ucm* pode encontrar o arquivo interno. Verificar se o conteúdo está como ucm.md ou fragmentado."
+  },
+  {
+    "path": "clients/kce/criativos/",
+    "type": "directory",
+    "current_role_hypothesis": "Artefatos gerados para KCE — PNGs de ads, social media e key visuals.",
+    "classification": "MOVE",
+    "recommended_action": "Renomear para clients/kce/output/ para padronizar com via-journey.",
+    "target_location": "clients/kce/output/",
+    "confidence": "high",
+    "notes": null
+  },
+  {
+    "path": "clients/via-journey/output/",
+    "type": "directory",
+    "current_role_hypothesis": "Artefatos gerados para via-journey — HTMLs de carrossel, ads e slides exportados.",
+    "classification": "KEEP_SUPPORT",
+    "recommended_action": "Manter. É o padrão a ser seguido pelos outros clientes.",
+    "target_location": "clients/via-journey/output/",
+    "confidence": "high",
+    "notes": null
+  },
+  {
+    "path": "clients/via-journey/Sem título",
+    "type": "file",
+    "current_role_hypothesis": "Arquivo Obsidian dentro da pasta do cliente.",
+    "classification": "DELETE_CANDIDATE",
+    "recommended_action": "Remover.",
+    "target_location": null,
+    "confidence": "high",
+    "notes": null
+  },
+  {
+    "path": "clients/hs-prevent/posicionamento-estrategico.md",
+    "type": "file",
+    "current_role_hypothesis": "Documento estratégico adicional fora do padrão dcc/ucm/brand.",
+    "classification": "KEEP_SUPPORT",
+    "recommended_action": "Manter. É informação válida de contexto do cliente. Considerar formalizar 'documentos extras' como extensão do padrão.",
+    "target_location": "clients/hs-prevent/posicionamento-estrategico.md",
+    "confidence": "high",
+    "notes": "client_context.py não lê este arquivo atualmente. Pode estar sendo ignorado silenciosamente."
+  },
+  {
+    "path": "outputs/",
+    "type": "directory",
+    "current_role_hypothesis": "Output store legado — JSON com histórico de entregáveis por cliente.",
+    "classification": "REFACTOR",
+    "recommended_action": "Manter temporariamente. Consolidar com data/ em solução única (Supabase ou filesystem padronizado).",
+    "target_location": "generated/ (fase 3)",
+    "confidence": "high",
+    "notes": "outputs/ está sendo commitado. data/ (workflow runs) não existe no repo. Inconsistência grave."
+  },
+  {
+    "path": "outputs/via-journey/lp-b2b/",
+    "type": "directory",
+    "current_role_hypothesis": "Landing page Via Journey como repositório git aninhado. Conteúdo duplica index.html na raiz e clients/via-journey/output/.",
+    "classification": "ARCHIVE",
+    "recommended_action": "RESOLVER PRIMEIRO. Opção A: remover .git interno e mover para clients/via-journey/output/lp-b2b/. Opção B: remover completamente.",
+    "target_location": "clients/via-journey/output/lp-b2b/ (opção A)",
+    "confidence": "high",
+    "notes": "CRÍTICO: nested git repo. Deve ser resolvido ANTES de qualquer reestruturação."
+  },
+  {
+    "path": "docs/",
+    "type": "directory",
+    "current_role_hypothesis": "Documentação — atualmente quase vazia (2 arquivos .txt).",
+    "classification": "REFACTOR",
+    "recommended_action": "Expandir com product/, adr/, runbooks/. Mover PLATFORM_BRIEFING.md para cá.",
+    "target_location": "docs/",
+    "confidence": "high",
+    "notes": null
+  },
+  {
+    "path": "docs/arquitetura-agente-v4.txt",
+    "type": "file",
+    "current_role_hypothesis": "Documento de arquitetura da v1 do agente (pipeline copy→designer→social). Desatualizado mas tem valor histórico.",
+    "classification": "ARCHIVE",
+    "recommended_action": "Mover para docs/adr/001-agent-v0-architecture.md. Adicionar nota de 'superseded by workflow engine'.",
+    "target_location": "docs/adr/001-agent-v0-architecture.md",
+    "confidence": "high",
+    "notes": null
+  },
+  {
+    "path": "docs/skill-brand-design-system.txt",
+    "type": "file",
+    "current_role_hypothesis": "Referência da skill de brand system. Pertence à skill, não à documentação do produto.",
+    "classification": "MOVE",
+    "recommended_action": "Mover para skills/brand-system-builder/references/ ou skills/brand-intel/references/.",
+    "target_location": "skills/brand-system-builder/references/design-system-guide.md",
+    "confidence": "high",
+    "notes": null
+  },
+  {
+    "path": "index.html",
+    "type": "file",
+    "current_role_hypothesis": "Landing page da Via Journey — artefato gerado para cliente. Provavelmente servido pelo Vercel como site estático ou por acidente de configuração.",
+    "classification": "MOVE",
+    "recommended_action": "Verificar se está sendo servido pelo Vercel. Se sim, mover para clients/via-journey/output/ e atualizar configuração. Se não, mover imediatamente.",
+    "target_location": "clients/via-journey/output/lp-b2b/index.html",
+    "confidence": "medium",
+    "notes": "REQUER VALIDAÇÃO: se o Vercel está servindo este arquivo como site principal, mover quebra a URL de produção."
+  },
+  {
+    "path": "assets/",
+    "type": "directory",
+    "current_role_hypothesis": "Imagens usadas pela index.html da Via Journey (logos, foto dr-andre). Artefato de cliente.",
+    "classification": "MOVE",
+    "recommended_action": "Mover junto com index.html para clients/via-journey/output/lp-b2b/assets/.",
+    "target_location": "clients/via-journey/output/lp-b2b/assets/",
+    "confidence": "medium",
+    "notes": "Mesmos arquivos existem em outputs/via-journey/lp-b2b/assets/. Consolidar em um único local."
+  },
+  {
+    "path": "export-slides.js",
+    "type": "file",
+    "current_role_hypothesis": "Script Node/Puppeteer para exportar slides do carrossel Via Journey como PNG. Script utilitário de cliente, não de produto.",
+    "classification": "MOVE",
+    "recommended_action": "Mover para tooling/scripts/. Atualizar paths hardcoded se necessário.",
+    "target_location": "tooling/scripts/export-slides.js",
+    "confidence": "high",
+    "notes": "Tem path hardcoded para /Users/lucasisaquerochasantos/... — script local, não para CI."
+  },
+  {
+    "path": "package.json",
+    "type": "file",
+    "current_role_hypothesis": "package.json raiz com apenas puppeteer como dependência. Existe para suportar export-slides.js.",
+    "classification": "DELETE_CANDIDATE",
+    "recommended_action": "Avaliar se export-slides.js ainda é usado regularmente. Se for processo pontual, remover e documentar instalação manual. Se for processo recorrente, mover para tooling/scripts/ com package.json próprio.",
+    "target_location": "tooling/scripts/package.json (se mantido)",
+    "confidence": "medium",
+    "notes": "Cria confusão: projeto parece ter stack JS dupla. Na verdade, platform/ tem seu próprio package.json com Next.js."
+  },
+  {
+    "path": "package-lock.json",
+    "type": "file",
+    "current_role_hypothesis": "Lock file do package.json raiz (puppeteer).",
+    "classification": "DELETE_CANDIDATE",
+    "recommended_action": "Remover junto com package.json se o script for movido.",
+    "target_location": null,
+    "confidence": "high",
+    "notes": null
+  },
+  {
+    "path": "PLATFORM_BRIEFING.md",
+    "type": "file",
+    "current_role_hypothesis": "Documento de contexto estratégico para sessões de IA. 710 linhas descrevendo toda a plataforma, skills, fluxos e gaps.",
+    "classification": "MOVE",
+    "recommended_action": "Mover para docs/product/platform-briefing.md. Não é um README — é documentação interna.",
+    "target_location": "docs/product/platform-briefing.md",
+    "confidence": "high",
+    "notes": "É o documento mais rico do repositório. Deve ficar em docs/, não na raiz."
+  },
+  {
+    "path": "plano-execucao-v4-skills-ops.docx",
+    "type": "file",
+    "current_role_hypothesis": "Documento de planejamento estratégico de execução do produto.",
+    "classification": "ARCHIVE",
+    "recommended_action": "Mover para docs/product/ ou docs/planning/. Fora do fluxo de desenvolvimento.",
+    "target_location": "docs/product/plano-execucao.docx",
+    "confidence": "high",
+    "notes": null
+  },
+  {
+    "path": "proximos-passos-v4-skills-ops.html",
+    "type": "file",
+    "current_role_hypothesis": "Roadmap HTML — provavelmente gerado pela plataforma ou por sessão de IA.",
+    "classification": "ARCHIVE",
+    "recommended_action": "Mover para docs/product/roadmap.html. Fora do fluxo de desenvolvimento.",
+    "target_location": "docs/product/roadmap.html",
+    "confidence": "high",
+    "notes": null
+  },
+  {
+    "path": "start.sh",
+    "type": "file",
+    "current_role_hypothesis": "Script de desenvolvimento local — inicia API e frontend em paralelo.",
+    "classification": "KEEP_SUPPORT",
+    "recommended_action": "Manter na raiz. Convenção útil para onboarding.",
+    "target_location": "start.sh",
+    "confidence": "high",
+    "notes": null
+  },
+  {
+    "path": "Procfile",
+    "type": "file",
+    "current_role_hypothesis": "Configuração de deploy Railway. Define o comando de start do backend.",
+    "classification": "KEEP_CORE",
+    "recommended_action": "Manter na raiz. Obrigatório para Railway.",
+    "target_location": "Procfile",
+    "confidence": "high",
+    "notes": "Se api/ for movido para apps/api/, atualizar para: web: python3 -m uvicorn apps.api.main:app ..."
+  },
+  {
+    "path": "requirements.txt",
+    "type": "file",
+    "current_role_hypothesis": "Dependências Python do backend.",
+    "classification": "KEEP_CORE",
+    "recommended_action": "Manter na raiz.",
+    "target_location": "requirements.txt",
+    "confidence": "high",
+    "notes": null
+  },
+  {
+    "path": "runtime.txt",
+    "type": "file",
+    "current_role_hypothesis": "Especifica versão Python para Railway.",
+    "classification": "KEEP_SUPPORT",
+    "recommended_action": "Manter na raiz.",
+    "target_location": "runtime.txt",
+    "confidence": "high",
+    "notes": null
+  },
+  {
+    "path": ".mcp.json",
+    "type": "file",
+    "current_role_hypothesis": "Configuração MCP (Model Context Protocol) para Claude Code.",
+    "classification": "KEEP_SUPPORT",
+    "recommended_action": "Manter.",
+    "target_location": ".mcp.json",
+    "confidence": "high",
+    "notes": null
+  },
+  {
+    "path": ".claude/",
+    "type": "directory",
+    "current_role_hypothesis": "Configurações e comandos customizados do Claude Code.",
+    "classification": "KEEP_SUPPORT",
+    "recommended_action": "Manter.",
+    "target_location": ".claude/",
+    "confidence": "high",
+    "notes": null
+  },
+  {
+    "path": ".env.example",
+    "type": "file",
+    "current_role_hypothesis": "Template de variáveis de ambiente.",
+    "classification": "KEEP_SUPPORT",
+    "recommended_action": "Manter e manter atualizado com todas as variáveis necessárias.",
+    "target_location": ".env.example",
+    "confidence": "high",
+    "notes": null
+  }
+]
