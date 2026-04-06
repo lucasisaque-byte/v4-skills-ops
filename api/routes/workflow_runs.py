@@ -74,8 +74,14 @@ def _step_sse_stream(run_id: str, step_id: str, client_id: str):
 
     model = run.llm_model or os.getenv("MODEL", "claude-sonnet-4-6")
 
+    client_ctx: dict | None = None
     try:
-        for chunk in stream_skill(step.primary_skill, briefing, None, model=model):
+        client_ctx = get_client_context(run.client_id)
+    except Exception:
+        client_ctx = None
+
+    try:
+        for chunk in stream_skill(step.primary_skill, briefing, client_ctx, model=model):
             accumulated.append(chunk)
             yield f"data: {json.dumps({'text': chunk})}\n\n"
     except Exception as e:

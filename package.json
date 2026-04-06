@@ -1,0 +1,10 @@
+{
+  "name": "v4-skills-ops",
+  "private": true,
+  "scripts": {
+    "railway": "railway"
+  },
+  "devDependencies": {
+    "@railway/cli": "^4.7.0"
+  }
+}
