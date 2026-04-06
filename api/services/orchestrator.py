@@ -66,6 +66,27 @@ Siga este schema exato:
 - O briefing é a instrução direta para a skill especializada: seja preciso e acionável
 - Para steps com `primary_skill: account-manager`, o briefing deve ser o plano estratégico completo
 
+### Extração obrigatória por documento
+
+**Do DCC — inclua no briefing:**
+- Persona: cargo, dores, medos, desejos (cite "extraído do DCC")
+- Tom de voz: exemplos de linguagem aprovada e proibida
+- Diferenciais e mecanismo único
+- Objeções críticas que impedem a compra
+- Provas sociais disponíveis (dados, cases, certificações)
+
+**Do UCM — inclua no briefing:**
+- Jobs-to-be-done: o progresso que o cliente quer fazer
+- Situação disparadora: o que faz o cliente buscar uma solução
+- Forças de push/pull: o que empurra para fora do estado atual e atrai para a solução
+- Ansiedades: o que freia a decisão de compra
+- Alternativas consideradas pelo cliente
+
+**Regra de rastreabilidade:** Para cada campo preenchido com dado do cliente,
+indique a fonte entre parênteses: (DCC), (UCM) ou (brand).
+Se o campo não foi encontrado em nenhum documento, declare:
+"Não encontrado — hipótese: [hipótese assumida]"
+
 Responda APENAS com o JSON, sem markdown, sem blocos de código, sem texto adicional.
 
 """

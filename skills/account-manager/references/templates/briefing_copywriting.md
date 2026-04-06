@@ -19,13 +19,13 @@
 
 ### Contexto estratégico
 **Dores prioritárias:**
-- [dor 1 — extraída do DCC/UCM]
-- [dor 2]
-- [dor 3]
+- [dor 1 — fonte: DCC / UCM / hipótese]
+- [dor 2 — fonte: DCC / UCM / hipótese]
+- [dor 3 — fonte: DCC / UCM / hipótese]
 
 **Objeções críticas:**
-- [objeção 1 — o que impede a compra hoje]
-- [objeção 2]
+- [objeção 1 — fonte: DCC / UCM / hipótese]
+- [objeção 2 — fonte: DCC / UCM / hipótese]
 
 **Diferenciais do produto:**
 - [diferencial 1]
@@ -43,7 +43,7 @@
 ---
 
 ### Identidade verbal
-**Tom de voz:** [formal / técnico-acessível / direto / consultivo]
+**Tom de voz:** [formal / técnico-acessível / direto / consultivo — extraído do DCC seção X / hipótese]
 **Termos obrigatórios:** [palavras ou expressões que devem aparecer]
 **Termos proibidos:** [palavras ou expressões que não devem aparecer]
 **Referências de estilo:** [exemplos de copy aprovada anteriormente]
@@ -56,7 +56,10 @@
 ---
 
 ### Documentos-base utilizados
-- [nome do arquivo / fonte]
+- DCC: [sim — {nome do arquivo} / não disponível]
+- UCM: [sim — {nome do arquivo} / não disponível]
+- Identidade visual: [sim / não disponível]
+- Outros: [nome do arquivo / fonte]
 
 ---
 

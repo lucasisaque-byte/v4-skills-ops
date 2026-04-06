@@ -57,11 +57,17 @@ def build_context_block(context: dict) -> str:
     """
     parts = [f"## Contexto do Cliente: {context.get('client_name', '')}"]
 
-    if context.get("dcc"):
-        parts.append(f"\n### DCC (Documento de Concepção de Copy)\n{_trunc(context['dcc'], 12000)}")
+    dcc = context.get("dcc")
+    if dcc:
+        parts.append(f"\n### DCC (Documento de Concepção de Copy)\n{_trunc(dcc, 12000)}")
+    else:
+        parts.append("\n### DCC (Documento de Concepção de Copy)\n**Status:** não disponível — conteúdo do documento não foi fornecido ao contexto.")
 
-    if context.get("ucm"):
-        parts.append(f"\n### UCM (Use Case Map)\n{_trunc(context['ucm'], 6000)}")
+    ucm = context.get("ucm")
+    if ucm:
+        parts.append(f"\n### UCM (Use Case Map)\n{_trunc(ucm, 6000)}")
+    else:
+        parts.append("\n### UCM (Use Case Map)\n**Status:** não disponível — conteúdo do documento não foi fornecido ao contexto.")
 
     brand = context.get("brand", {})
     if brand.get("identidade"):

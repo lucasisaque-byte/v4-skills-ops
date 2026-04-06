@@ -28,13 +28,18 @@
 **Como esse conteúdo se conecta à estratégia maior:**
 [ex: alimenta a LP de conversão / aquece lead para abordagem comercial / reativa base]
 
+**Dores prioritárias:**
+- [dor 1 — fonte: DCC / UCM / hipótese]
+- [dor 2 — fonte: DCC / UCM / hipótese]
+- [dor 3 — fonte: DCC / UCM / hipótese]
+
 **Contexto do cliente / campanha:**
-[o que está acontecendo com o cliente que torna esse conteúdo relevante agora]
+[extraído do UCM — situação disparadora e forças de push/pull — ou hipótese assumida]
 
 ---
 
 ### Diretrizes de marca
-**Tom:** [sólido / técnico-acessível / provocador / educativo / executivo]
+**Tom:** [sólido / técnico-acessível / provocador / educativo / executivo — extraído do DCC / hipótese]
 **Termos obrigatórios:** [expressões que devem aparecer]
 **Termos proibidos:** [expressões que não devem aparecer]
 **Referências de conteúdo aprovado:** [links ou nomes de peças anteriores]
@@ -60,7 +65,10 @@
 ---
 
 ### Documentos-base utilizados
-- [nome do arquivo / fonte]
+- DCC: [sim — {nome do arquivo} / não disponível]
+- UCM: [sim — {nome do arquivo} / não disponível]
+- Identidade visual: [sim / não disponível]
+- Outros: [nome do arquivo / fonte]
 
 ---
 

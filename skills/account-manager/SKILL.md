@@ -104,6 +104,40 @@ Consulte `references/templates/` para os templates prontos de cada skill.
 
 ---
 
+## Uso obrigatório de DCC e UCM nos briefings
+
+Todo briefing gerado deve declarar explicitamente quais informações vieram do DCC e do UCM.
+
+### Do DCC, extraia e cite no briefing:
+- Persona (cargo, dores, medos, desejos)
+- Tom de voz (com exemplos de linguagem aprovada e proibida)
+- Diferenciais e mecanismo único do produto
+- Objeções críticas que impedem a compra
+- Provas sociais disponíveis (dados, cases, certificações)
+- Oferta estruturada
+
+### Do UCM, extraia e cite no briefing:
+- Jobs-to-be-done (o progresso que o cliente quer fazer)
+- Situação disparadora (o que faz o cliente buscar uma solução)
+- Forças de push (o que empurra para fora do estado atual)
+- Forças de pull (o que atrai para a nova solução)
+- Ansiedades (o que freia a decisão de compra)
+- Alternativas consideradas pelo cliente
+
+### Regra de rastreabilidade
+Para cada campo do briefing preenchido com dado do cliente, indique a fonte:
+`(DCC)`, `(UCM)` ou `(brand)`.
+
+Se o campo não foi encontrado em nenhum documento, declare:
+> "Não encontrado no DCC/UCM disponível — hipótese assumida: [hipótese]. Risco: [risco]."
+
+### Documentos ausentes
+- Se DCC ausente: sinalize em "Lacunas de contexto" e assuma hipóteses baseadas no perfil do segmento
+- Se UCM ausente: sinalize e use o DCC como proxy para inferir jobs-to-be-done
+- Se ambos ausentes: interrompa e solicite ao usuário antes de prosseguir
+
+---
+
 ## Gestão de aprovações
 
 **APROVAÇÃO 1** — após Copywriting ou Social Media:
