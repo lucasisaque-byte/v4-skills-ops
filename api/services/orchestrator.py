@@ -248,7 +248,7 @@ def orchestrate_and_stream(
         yield f"__AM_DONE__{json.dumps({'skill': skill_alvo, 'observacoes': plan.observations}, ensure_ascii=False)}"
 
         yield "__SKILL_START__"
-        for chunk in stream_skill(skill_alvo, briefing, None, model=model):
+        for chunk in stream_skill(skill_alvo, briefing, client_context, model=model):
             yield chunk
 
     except Exception as e:
