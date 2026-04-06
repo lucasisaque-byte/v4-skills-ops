@@ -8,7 +8,14 @@ from pydantic import BaseModel
 
 router = APIRouter(prefix="/config", tags=["config"])
 
-ALLOWED_MODELS = frozenset({"claude-sonnet-4-6", "claude-opus-4-6"})
+ALLOWED_MODELS = frozenset({
+    "claude-sonnet-4-6",
+    "claude-opus-4-6",
+    "gemini-2.0-flash",
+    "gemini-2.0-flash-lite",
+    "gemini-1.5-flash",
+    "gemini-1.5-pro",
+})
 ENV_PATH = Path(__file__).resolve().parent.parent.parent / ".env"
 
 _DEFAULT_MODEL = "claude-sonnet-4-6"

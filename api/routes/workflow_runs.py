@@ -2,7 +2,7 @@
 Workflow Runs Router
 
 Endpoints:
-  POST   /workflow-runs                                    — cria run + executa primeiro step
+  POST   /workflow-runs                                    — cria run (planejamento assíncrono) + primeiro step quando pronto
   GET    /workflow-runs/{run_id}                           — estado completo do run
   GET    /workflow-runs/{run_id}/steps/{step_id}/stream    — SSE: (re)executa step
   POST   /workflow-runs/{run_id}/steps/{step_id}/approve   — aprova step, avança
@@ -14,14 +14,21 @@ Endpoints:
 import json
 import logging
 import os
-from fastapi import APIRouter, HTTPException
+import threading
+from fastapi import APIRouter, Depends, HTTPException
 from fastapi.responses import StreamingResponse
 
+from api.deps import (
+    check_workflow_create_rate_limit,
+    check_workflow_stream_rate_limit,
+    verify_workflow_token,
+)
 from api.models.workflow import (
     CreateWorkflowRunRequest,
     ApproveStepRequest,
     RejectStepRequest,
     RebriefRequest,
+    UISummary,
 )
 from api.services.orchestrator import plan_workflow
 from api.services.skill_runner import stream_skill
@@ -33,7 +40,10 @@ from api.routes.config import ALLOWED_MODELS
 
 logger = logging.getLogger(__name__)
 
-router = APIRouter(tags=["workflow-runs"])
+router = APIRouter(
+    tags=["workflow-runs"],
+    dependencies=[Depends(verify_workflow_token)],
+)
 
 
 def _validate_optional_model(m: str | None) -> str | None:
@@ -88,6 +98,11 @@ def _step_sse_stream(run_id: str, step_id: str, client_id: str):
             accumulated.append(chunk)
             yield f"data: {json.dumps({'text': chunk})}\n\n"
     except Exception as e:
+        try:
+            run_reload = _load_run(run_id, client_id)
+            engine.fail_step(run_reload, step_id, str(e))
+        except Exception:
+            logger.exception("fail_step after stream error for run=%s step=%s", run_id, step_id)
         yield f"data: {json.dumps({'event': f'__ERROR__{str(e)}'})}\n\n"
         return
 
@@ -126,47 +141,104 @@ def list_all_workflow_runs(limit: int = 100):
     return {"runs": engine.list_all_runs(limit=limit)}
 
 
-@router.post("/workflow-runs")
+def _execute_planning_job_sync(run_id: str) -> None:
+    """Executa o Account Manager e finaliza ou falha o run (thread worker)."""
+    stop_hb = threading.Event()
+
+    def heartbeat_loop() -> None:
+        while not stop_hb.wait(45):
+            if not engine.touch_planning_heartbeat(run_id):
+                return
+
+    acquired = False
+    hb_thread: threading.Thread | None = None
+    try:
+        if not engine.acquire_planning_worker(run_id):
+            return
+        acquired = True
+        hb_thread = threading.Thread(target=heartbeat_loop, daemon=True, name=f"plan-hb-{run_id}")
+        hb_thread.start()
+        run = engine.begin_planning_attempt(run_id)
+        if not run or run.status != "planning":
+            return
+        run = engine.update_planning_progress(run, "Chamando Account Manager…")
+        ctx = get_client_context(run.client_id)
+        if not ctx:
+            raise RuntimeError(f"Cliente '{run.client_id}' não encontrado")
+        task_description = _build_task_description(run.task_type, run.task_input)
+        model_for_plan = run.llm_model
+        if model_for_plan and model_for_plan not in ALLOWED_MODELS:
+            model_for_plan = None
+        plan = plan_workflow(task_description, run.task_type, ctx, model=model_for_plan)
+        run = engine.load_run(run_id)
+        if not run or run.status != "planning":
+            return
+        engine.finalize_planning(run, plan)
+    except Exception as e:
+        logger.exception("planning job failed for run_id=%s", run_id)
+        run = engine.load_run(run_id)
+        if run and run.status == "planning":
+            engine.fail_planning(run, str(e))
+    finally:
+        stop_hb.set()
+        if hb_thread is not None:
+            hb_thread.join(timeout=2.0)
+        if acquired:
+            engine.release_planning_worker(run_id)
+
+
+def dispatch_planning_job(run_id: str) -> None:
+    """Agenda o planejamento em thread daemon (persistido + reconciliável após crash)."""
+    threading.Thread(
+        target=_execute_planning_job_sync,
+        args=(run_id,),
+        daemon=True,
+        name=f"planning-{run_id}",
+    ).start()
+
+
+@router.post("/workflow-runs", dependencies=[Depends(check_workflow_create_rate_limit)])
 def create_workflow_run(req: CreateWorkflowRunRequest):
     """
-    Cria um WorkflowRun completo:
-      1. Chama o Account Manager (com SKILL.md) para produzir o RuntimePlan
-      2. Cria o WorkflowRun com steps e briefings
-      3. Retorna o run + SSE URL para executar o primeiro step
+    Cria um WorkflowRun em status `planning` e dispara o planejamento (AM) em background.
+    O cliente deve acompanhar GET /workflow-runs/{run_id} até status != planning.
     """
     try:
         ctx = _load_client(req.client_id)
 
-        # Monta descrição da tarefa a partir dos inputs
-        task_description = _build_task_description(req.task_type, req.input)
-
         validated = _validate_optional_model(req.llm_model)
         resolved_model = validated or os.getenv("MODEL", "claude-sonnet-4-6")
 
-        # AM produz RuntimePlan
-        plan = plan_workflow(task_description, req.task_type, ctx, model=validated)
-
-        # Engine cria e persiste o WorkflowRun
-        run = engine.create_run(
+        run = engine.create_pending_run(
             client_id=req.client_id,
             client_name=ctx["client_name"],
-            plan=plan,
+            task_type=req.task_type,
             task_input=req.input,
             llm_model=resolved_model,
         )
 
-        first_step = engine.get_current_step(run)
+        dispatch_planning_job(run.run_id)
+
+        ui = UISummary(
+            primary_skill_for_next_step="account-manager",
+            skills_used_to_build_current_material=["account-manager"],
+            current_stage_label="Planejando workflow…",
+        )
 
         return {
-            "run_id":       run.run_id,
-            "status":       run.status,
-            "task_summary": run.task_summary,
-            "template_id":  run.template_id,
-            "current_step": first_step.model_dump() if first_step else None,
-            "steps":        [s.model_dump(exclude={"artifacts"}) for s in run.steps],
-            "ui_summary":   plan.ui_summary.model_dump(),
-            "observations": plan.observations,
-            "stream_url":   f"/workflow-runs/{run.run_id}/steps/{first_step.step_id}/stream" if first_step else None,
+            "run_id":            run.run_id,
+            "status":            run.status,
+            "task_summary":      run.task_summary,
+            "template_id":       run.template_id,
+            "current_step":      None,
+            "steps":             [],
+            "ui_summary":        ui.model_dump(),
+            "observations":      "",
+            "stream_url":        None,
+            "planning_progress": run.planning_progress,
+            "planning_heartbeat_at": run.planning_heartbeat_at,
+            "planning_attempt": run.planning_attempt,
+            "planning_retry_note": run.planning_retry_note,
         }
     except HTTPException:
         raise
@@ -174,7 +246,7 @@ def create_workflow_run(req: CreateWorkflowRunRequest):
         logger.exception("create_workflow_run")
         raise HTTPException(
             status_code=502,
-            detail="Falha ao planejar o workflow (serviço de IA). Tente novamente em instantes.",
+            detail="Falha ao iniciar o workflow. Tente novamente em instantes.",
         )
 
 
@@ -182,13 +254,24 @@ def create_workflow_run(req: CreateWorkflowRunRequest):
 def get_workflow_run(run_id: str, client_id: str | None = None):
     """Retorna o estado completo do WorkflowRun."""
     run = _load_run(run_id, client_id)
+    if run.status == "planning":
+        engine.try_reconcile_planning_run(run_id, dispatch_planning_job)
+        run = _load_run(run_id, client_id)
     return run.model_dump()
 
 
-@router.get("/workflow-runs/{run_id}/steps/{step_id}/stream")
+@router.get(
+    "/workflow-runs/{run_id}/steps/{step_id}/stream",
+    dependencies=[Depends(check_workflow_stream_rate_limit)],
+)
 def stream_step(run_id: str, step_id: str):
     """SSE: executa (ou re-executa) a skill do step e faz stream do output."""
     run = _load_run(run_id)
+    if run.status == "planning":
+        raise HTTPException(
+            status_code=409,
+            detail="Workflow ainda em planejamento. Aguarde o primeiro step ficar disponível.",
+        )
     return StreamingResponse(
         _step_sse_stream(run_id, step_id, run.client_id),
         media_type="text/event-stream",

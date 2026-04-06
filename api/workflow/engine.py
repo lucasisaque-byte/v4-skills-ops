@@ -12,10 +12,15 @@ O engine NÃO executa skills — isso fica no orchestrator.
 O engine gerencia estado e decide qual step executar a seguir.
 """
 import json
+import logging
+import os
+import threading
 import uuid
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
-from typing import Optional
+from typing import Callable, Optional
+
+logger = logging.getLogger(__name__)
 
 from api.models.workflow import (
     WorkflowRun, StepRun, StepArtifact,
@@ -25,6 +30,140 @@ from api.models.workflow import (
 from api.workflow.registry import get_template
 
 DATA_DIR = Path(__file__).parent.parent.parent / "data"
+
+_planning_worker_lock = threading.Lock()
+_active_planning_workers: set[str] = set()
+_reconcile_single_lock = threading.Lock()
+
+
+def _planning_stale_seconds() -> int:
+    return max(30, int(os.getenv("WORKFLOW_PLANNING_STALE_SECONDS", "300")))
+
+
+def _planning_max_attempts() -> int:
+    return max(1, int(os.getenv("WORKFLOW_PLANNING_MAX_ATTEMPTS", "5")))
+
+
+def _parse_iso(ts: str) -> datetime:
+    if ts.endswith("Z"):
+        ts = ts[:-1] + "+00:00"
+    return datetime.fromisoformat(ts)
+
+
+def acquire_planning_worker(run_id: str) -> bool:
+    """Evita dois workers simultâneos no mesmo run (BackgroundTasks + reconciler)."""
+    with _planning_worker_lock:
+        if run_id in _active_planning_workers:
+            return False
+        _active_planning_workers.add(run_id)
+        return True
+
+
+def release_planning_worker(run_id: str) -> None:
+    with _planning_worker_lock:
+        _active_planning_workers.discard(run_id)
+
+
+def is_planning_stale(run: WorkflowRun) -> bool:
+    """True se o planejamento não atualizou heartbeat dentro da janela configurada."""
+    if run.status != "planning":
+        return False
+    ref = run.planning_heartbeat_at or run.planning_started_at or run.created_at
+    try:
+        t = _parse_iso(ref)
+    except Exception:
+        return True
+    if t.tzinfo is None:
+        t = t.replace(tzinfo=timezone.utc)
+    now = datetime.now(timezone.utc)
+    return (now - t) > timedelta(seconds=_planning_stale_seconds())
+
+
+def touch_planning_heartbeat(run_id: str) -> bool:
+    """Atualiza planning_heartbeat_at se o run ainda estiver em planning."""
+    run = load_run(run_id)
+    if not run or run.status != "planning":
+        return False
+    run.planning_heartbeat_at = _now()
+    save_run(run)
+    return True
+
+
+def begin_planning_attempt(run_id: str) -> Optional[WorkflowRun]:
+    """
+    Incrementa planning_attempt e heartbeat no início de cada execução do job de planejamento.
+    """
+    run = load_run(run_id)
+    if not run or run.status != "planning":
+        return None
+    run.planning_attempt = (run.planning_attempt or 0) + 1
+    run.planning_heartbeat_at = _now()
+    run.planning_retry_note = None
+    save_run(run)
+    return run
+
+
+def mark_planning_retrying(run: WorkflowRun, note: str) -> WorkflowRun:
+    run.planning_retry_note = note
+    run.planning_progress = note
+    run.planning_heartbeat_at = _now()
+    save_run(run)
+    return run
+
+
+def reconcile_stale_planning_runs(dispatch: Callable[[str], None]) -> int:
+    """
+    Reaplica planejamento para runs em `planning` com heartbeat obsoleto ou falha
+    após limite de tentativas. Retorna quantos runs foram tratados (retry ou falha).
+    """
+    count = 0
+    for p in DATA_DIR.glob("clients/*/workflows/*/*/workflow.json"):
+        try:
+            raw = json.loads(p.read_text())
+            if raw.get("status") != "planning":
+                continue
+            run = WorkflowRun(**raw)
+            if not is_planning_stale(run):
+                continue
+            if run.run_id in _active_planning_workers:
+                continue
+            if _reconcile_one_stale(run, dispatch):
+                count += 1
+        except Exception:
+            logger.exception("reconcile_stale_planning_runs path=%s", p)
+    return count
+
+
+def try_reconcile_planning_run(run_id: str, dispatch: Callable[[str], None]) -> None:
+    """Chamado no GET do run para retomar rápido após restart; não bloqueia."""
+    with _reconcile_single_lock:
+        run = load_run(run_id)
+        if not run or run.status != "planning":
+            return
+        if not is_planning_stale(run):
+            return
+        if run.run_id in _active_planning_workers:
+            return
+        if _reconcile_one_stale(run, dispatch):
+            pass
+
+
+def _reconcile_one_stale(run: WorkflowRun, dispatch: Callable[[str], None]) -> bool:
+    max_a = _planning_max_attempts()
+    if (run.planning_attempt or 0) >= max_a:
+        fail_planning(
+            run,
+            "O planejamento excedeu o número máximo de tentativas após interrupções ou timeouts. "
+            "Crie um novo workflow ou tente novamente em instantes.",
+        )
+        return True
+    run = mark_planning_retrying(
+        run,
+        "Reiniciando o planejamento após interrupção do servidor… (tentativa "
+        f"{(run.planning_attempt or 0) + 1}/{max_a})",
+    )
+    dispatch(run.run_id)
+    return True
 
 
 # ─── Persistence ──────────────────────────────────────────────────────────────
@@ -106,17 +245,15 @@ def list_runs(client_id: str, task_type: Optional[str] = None) -> list[dict]:
 
 # ─── Factory ──────────────────────────────────────────────────────────────────
 
-def create_run(
+def _build_run_from_plan(
+    run_id: str,
     client_id: str,
     client_name: str,
     plan: RuntimePlan,
     task_input: dict,
-    llm_model: str | None = None,
+    llm_model: str | None,
 ) -> WorkflowRun:
-    """
-    Cria um WorkflowRun a partir do RuntimePlan produzido pelo AM.
-    Monta os StepRuns usando o template + briefings do plano.
-    """
+    """Monta WorkflowRun completo a partir do RuntimePlan (sem persistir)."""
     template = get_template(plan.workflow_template_id)
     briefing_map = {sb.step_id: sb.briefing for sb in plan.step_briefings}
 
@@ -138,8 +275,8 @@ def create_run(
     ]
 
     now = _now()
-    run = WorkflowRun(
-        run_id=_make_run_id(client_id, plan.task_type),
+    return WorkflowRun(
+        run_id=run_id,
         client_id=client_id,
         client_name=client_name,
         template_id=plan.workflow_template_id,
@@ -154,11 +291,112 @@ def create_run(
         created_at=now,
         updated_at=now,
     )
+
+
+def create_run(
+    client_id: str,
+    client_name: str,
+    plan: RuntimePlan,
+    task_input: dict,
+    llm_model: str | None = None,
+) -> WorkflowRun:
+    """
+    Cria um WorkflowRun a partir do RuntimePlan produzido pelo AM.
+    Monta os StepRuns usando o template + briefings do plano.
+    """
+    run_id = _make_run_id(client_id, plan.task_type)
+    run = _build_run_from_plan(run_id, client_id, client_name, plan, task_input, llm_model)
+    save_run(run)
+    return run
+
+
+def create_pending_run(
+    client_id: str,
+    client_name: str,
+    task_type: str,
+    task_input: dict,
+    llm_model: str | None = None,
+) -> WorkflowRun:
+    """
+    Cria um run em status `planning` (sem steps) até o Account Manager concluir o RuntimePlan.
+    """
+    run_id = _make_run_id(client_id, task_type)
+    now = _now()
+    run = WorkflowRun(
+        run_id=run_id,
+        client_id=client_id,
+        client_name=client_name,
+        template_id="pending",
+        task_type=task_type,
+        llm_model=llm_model,
+        task_input=task_input,
+        task_summary="Planejando workflow…",
+        status="planning",
+        current_step_id=None,
+        steps=[],
+        runtime_plan=None,
+        planning_progress="Iniciando planejamento…",
+        planning_error=None,
+        planning_started_at=now,
+        planning_completed_at=None,
+        planning_heartbeat_at=None,
+        planning_attempt=0,
+        planning_retry_note=None,
+        created_at=now,
+        updated_at=now,
+    )
+    save_run(run)
+    return run
+
+
+def update_planning_progress(run: WorkflowRun, message: str) -> WorkflowRun:
+    run.planning_progress = message
+    run.planning_heartbeat_at = _now()
+    save_run(run)
+    return run
+
+
+def finalize_planning(run: WorkflowRun, plan: RuntimePlan) -> WorkflowRun:
+    """Substitui o stub de planejamento pelo run completo, preservando run_id e timestamps."""
+    created = run.created_at
+    started = run.planning_started_at
+    new = _build_run_from_plan(
+        run.run_id, run.client_id, run.client_name, plan, run.task_input, run.llm_model
+    )
+    new.created_at = created
+    new.planning_started_at = started
+    new.planning_progress = None
+    new.planning_error = None
+    new.planning_heartbeat_at = None
+    new.planning_retry_note = None
+    new.planning_completed_at = _now()
+    save_run(new)
+    return new
+
+
+def fail_planning(run: WorkflowRun, error: str) -> WorkflowRun:
+    run.status = "failed"
+    run.planning_error = error
+    run.planning_progress = None
+    run.planning_heartbeat_at = None
+    run.planning_retry_note = None
+    run.planning_completed_at = _now()
     save_run(run)
     return run
 
 
 # ─── State transitions ────────────────────────────────────────────────────────
+
+def fail_step(run: WorkflowRun, step_id: str, error_message: str) -> WorkflowRun:
+    """Marca step e run como falha após erro em execução (ex.: stream SSE)."""
+    step = _get_step(run, step_id)
+    step.status = "failed"
+    step.error_message = error_message
+    step.completed_at = _now()
+    run.status = "failed"
+    save_run(run)
+    return run
+
 
 def mark_step_running(run: WorkflowRun, step_id: str) -> WorkflowRun:
     step = _get_step(run, step_id)

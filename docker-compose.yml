@@ -1,0 +1,22 @@
+services:
+  api:
+    build: .
+    ports:
+      - "8000:8000"
+    env_file: .env
+    volumes:
+      - ./data:/app/data
+      - ./clients:/app/clients
+    restart: unless-stopped
+
+  platform:
+    build: ./platform
+    ports:
+      - "3000:3000"
+    env_file: ./platform/.env.local
+    environment:
+      # Aponta para o container da API (sobrescreve NEXT_PUBLIC_API_URL do .env.local)
+      WORKFLOW_API_UPSTREAM_URL: http://api:8000
+    depends_on:
+      - api
+    restart: unless-stopped

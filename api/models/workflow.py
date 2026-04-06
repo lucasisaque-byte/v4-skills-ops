@@ -129,7 +129,7 @@ StepStatus = Literal[
 ]
 
 WorkflowStatus = Literal[
-    "draft", "planned", "in_progress", "waiting_approval",
+    "draft", "planning", "planned", "in_progress", "waiting_approval",
     "rebrief_required", "rejected", "completed", "failed"
 ]
 
@@ -150,6 +150,7 @@ class StepRun(BaseModel):
     status: StepStatus = "pending"
     artifacts: list[StepArtifact] = []
     feedback: Optional[str] = None
+    error_message: Optional[str] = None
     started_at: Optional[str] = None
     completed_at: Optional[str] = None
 
@@ -167,6 +168,13 @@ class WorkflowRun(BaseModel):
     current_step_id: Optional[str] = None
     steps: list[StepRun] = []
     runtime_plan: Optional[RuntimePlan] = None
+    planning_progress: Optional[str] = None
+    planning_error: Optional[str] = None
+    planning_started_at: Optional[str] = None
+    planning_completed_at: Optional[str] = None
+    planning_heartbeat_at: Optional[str] = None
+    planning_attempt: int = 0
+    planning_retry_note: Optional[str] = None
     created_at: str
     updated_at: str
 

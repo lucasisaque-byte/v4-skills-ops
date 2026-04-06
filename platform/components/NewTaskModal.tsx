@@ -123,6 +123,7 @@ export function NewTaskModal({ open, onClose }: Props) {
         input,
         model,
       })
+      setCreating(false)
       onClose()
       router.push(`/workspace/runs/${run.run_id}`)
     } catch (e: any) {

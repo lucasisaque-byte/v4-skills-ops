@@ -50,6 +50,7 @@ export default function AdsPage() {
         input: { campaign_objective: objective, platform, offer_description: offer, tone },
         model,
       })
+      setCreating(false)
       router.push(`/workspace/runs/${run.run_id}`)
     } catch (e: any) {
       setError(e.message)

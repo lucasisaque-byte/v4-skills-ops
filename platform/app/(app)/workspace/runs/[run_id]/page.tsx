@@ -26,9 +26,11 @@ export default function RunPage() {
   const isStreaming = phase === 'planning' || phase === 'streaming'
 
   const phaseLabel =
-    phase === 'planning'  ? 'Account Manager preparando briefing...' :
-    phase === 'streaming' ? `Executando ${meta?.current_step_title ?? 'step'}...` :
-    ''
+    phase === 'planning'
+      ? (meta?.planning_progress || 'Account Manager preparando briefing…')
+      : phase === 'streaming'
+        ? `Executando ${meta?.current_step_title ?? 'step'}…`
+        : ''
 
   // Loading state
   if (phase === 'planning' && !meta) {
@@ -114,11 +116,11 @@ export default function RunPage() {
             </div>
           )}
 
-          {/* Estado idle / planejando sem output ainda */}
+          {/* Planejamento assíncrono (AM) até o primeiro step ficar disponível */}
           {phase === 'planning' && !output && (
             <div className="flex items-center gap-2.5 text-sm text-muted-foreground py-8">
               <Loader2 className="w-4 h-4 animate-spin" />
-              Account Manager analisando contexto e definindo plano...
+              {meta?.planning_progress || 'Account Manager analisando contexto e definindo plano…'}
             </div>
           )}
         </div>

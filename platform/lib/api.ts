@@ -1,19 +1,41 @@
 /**
- * URL base da API FastAPI (Railway em produção).
- * Não usamos proxy pelo Vercel: o POST /workflow-runs espera a resposta da Anthropic (vários segundos) e o
- * encaminhamento no edge do Vercel estoura o tempo limite → 500 genérico. Chamada direta cross-origin com
- * CORS liberado no FastAPI evita isso.
+ * Chamadas à API FastAPI passam pelo proxy same-origin `/api/backend` (Route Handler no Next.js),
+ * que injeta `WORKFLOW_API_TOKEN` só no servidor — o segredo nunca vai ao browser.
+ *
+ * O POST /workflow-runs pode demorar (Anthropic); o proxy usa `maxDuration` no route handler.
+ * Em deploy serverless, configure limite de duração compatível com o plano (ex.: Vercel).
  */
-const DEFAULT_PROD_API = 'https://v4-skills-ops-production.up.railway.app'
+const DEFAULT_PROXY_BASE = '/api/backend'
+const DEFAULT_DEV_UPSTREAM = 'http://localhost:8000'
 
+function isAbsoluteHttpUrl(s: string): boolean {
+  try {
+    const u = new URL(s)
+    return u.protocol === 'http:' || u.protocol === 'https:'
+  } catch {
+    return false
+  }
+}
+
+/**
+ * Base para fetch no browser: proxy Next.js (credencial no servidor).
+ * Em SSR raro, URL upstream direta (sem token — não usar para workflow sem outro mecanismo).
+ */
 function getApiBase(): string {
   if (typeof window !== 'undefined') {
-    const { hostname } = window.location
-    if (hostname === 'localhost' || hostname === '127.0.0.1') {
-      return process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'
-    }
+    const raw = process.env.NEXT_PUBLIC_WORKFLOW_PROXY_BASE || DEFAULT_PROXY_BASE
+    return raw.replace(/\/$/, '')
   }
-  return process.env.NEXT_PUBLIC_API_URL || DEFAULT_PROD_API
+  const raw =
+    process.env.WORKFLOW_API_UPSTREAM_URL?.trim() ||
+    process.env.NEXT_PUBLIC_API_URL?.trim() ||
+    DEFAULT_DEV_UPSTREAM
+  if (!isAbsoluteHttpUrl(raw)) {
+    throw new Error(
+      'Em SSR, WORKFLOW_API_UPSTREAM_URL ou NEXT_PUBLIC_API_URL deve ser uma URL http(s) absoluta.',
+    )
+  }
+  return raw.replace(/\/$/, '')
 }
 
 /** Mensagem amigável quando o fetch falha antes de qualquer resposta HTTP (rede, CORS, servidor fora do ar). */
@@ -38,8 +60,11 @@ function mapNetworkError(e: unknown): Error {
 
 async function fetchAPI(path: string, options?: RequestInit) {
   let res: Response
+  const headers: Record<string, string> = {
+    ...((options?.headers as Record<string, string>) || {}),
+  }
   try {
-    res = await fetch(`${getApiBase()}${path}`, options)
+    res = await fetch(`${getApiBase()}${path}`, { ...options, headers })
   } catch (e) {
     throw mapNetworkError(e)
   }
@@ -107,6 +132,26 @@ async function readSSE(
   onDone()
 }
 
+export type WorkflowRunPayload = {
+  run_id: string
+  status: string
+  task_summary?: string
+  template_id?: string
+  planning_progress?: string | null
+  planning_error?: string | null
+  /** ISO timestamp — atualizado durante o planejamento (heartbeat). */
+  planning_heartbeat_at?: string | null
+  /** Quantas vezes o job de planejamento foi iniciado (inclui retentativas após crash). */
+  planning_attempt?: number
+  /** Mensagem quando o servidor reiniciou o planejamento após interrupção. */
+  planning_retry_note?: string | null
+  steps?: unknown[]
+  runtime_plan?: { ui_summary?: unknown; observations?: string }
+  client_name?: string
+  task_type?: string
+  current_step_id?: string | null
+}
+
 export const api = {
   // ─── Config ─────────────────────────────────────────────────────────────────
   getConfig: () => fetchAPI('/config'),
@@ -137,7 +182,36 @@ export const api = {
     model?: string
   }) => postJSON('/workflow-runs', data),
 
-  getWorkflowRun: (run_id: string) => fetchAPI(`/workflow-runs/${run_id}`),
+  getWorkflowRun: (run_id: string) => fetchAPI(`/workflow-runs/${run_id}`) as Promise<WorkflowRunPayload>,
+
+  /**
+   * Aguarda o run sair de status `planning` (polling). Falha se o run passar a `failed` no planejamento.
+   */
+  pollWorkflowRunUntilReady: async (
+    run_id: string,
+    options?: {
+      intervalMs?: number
+      maxAttempts?: number
+      onProgress?: (run: WorkflowRunPayload) => void
+    },
+  ): Promise<WorkflowRunPayload> => {
+    const interval = options?.intervalMs ?? 1000
+    const max = options?.maxAttempts ?? 300
+    for (let i = 0; i < max; i++) {
+      const run = (await fetchAPI(`/workflow-runs/${run_id}`)) as WorkflowRunPayload
+      options?.onProgress?.(run)
+      if (run.status === 'failed') {
+        const stepFail = (run.steps as Array<{ status?: string; error_message?: string }> | undefined)?.find(
+          (s) => s.status === 'failed',
+        )
+        const msg = run.planning_error || stepFail?.error_message || 'Workflow falhou'
+        throw new Error(msg)
+      }
+      if (run.status !== 'planning') return run
+      await new Promise((r) => setTimeout(r, interval))
+    }
+    throw new Error('Tempo esgotado aguardando o planejamento do workflow.')
+  },
 
   listAllWorkflowRuns: (limit = 100) => fetchAPI(`/workflow-runs?limit=${limit}`),
 

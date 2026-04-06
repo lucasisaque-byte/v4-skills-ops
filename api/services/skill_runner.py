@@ -1,10 +1,15 @@
 """
-Executa skills usando Anthropic como LLM principal.
+Executa skills usando Anthropic ou Google Gemini como LLM.
+Detecção de provedor pelo prefixo do model name:
+  - "gemini-*" → Google Gemini (google-genai SDK)
+  - demais     → Anthropic
 """
 import os
 import json
 from pathlib import Path
 import anthropic
+import google.genai
+import google.genai.types
 
 SKILLS_DIR = Path(__file__).parent.parent.parent / "skills"
 
@@ -34,6 +39,14 @@ def _resolve_max_tokens(explicit: int | None) -> int:
 
 def _client() -> anthropic.Anthropic:
     return anthropic.Anthropic(api_key=os.getenv("ANTHROPIC_API_KEY"))
+
+
+def _google_client() -> google.genai.Client:
+    return google.genai.Client(api_key=os.getenv("GOOGLE_API_KEY"))
+
+
+def _is_google_model(model: str) -> bool:
+    return model.startswith("gemini-")
 
 
 def load_skill(skill_name: str) -> str:
@@ -99,13 +112,26 @@ def run_skill(
     if client_context:
         user_message = f"{build_context_block(client_context)}\n\n---\n\n{prompt}"
 
-    response = _client().messages.create(
-        model=model,
-        max_tokens=max_tokens,
-        system=system_prompt,
-        messages=[{"role": "user", "content": user_message}],
-    )
-    return response.content[0].text
+    if _is_google_model(model):
+        client = _google_client()
+        config = google.genai.types.GenerateContentConfig(
+            system_instruction=system_prompt,
+            max_output_tokens=max_tokens,
+        )
+        response = client.models.generate_content(
+            model=model,
+            contents=user_message,
+            config=config,
+        )
+        return response.text
+    else:
+        response = _client().messages.create(
+            model=model,
+            max_tokens=max_tokens,
+            system=system_prompt,
+            messages=[{"role": "user", "content": user_message}],
+        )
+        return response.content[0].text
 
 
 def stream_skill(
@@ -124,11 +150,25 @@ def stream_skill(
     if client_context:
         user_message = f"{build_context_block(client_context)}\n\n---\n\n{prompt}"
 
-    with _client().messages.stream(
-        model=model,
-        max_tokens=max_tokens,
-        system=system_prompt,
-        messages=[{"role": "user", "content": user_message}],
-    ) as stream:
-        for chunk in stream.text_stream:
-            yield chunk
+    if _is_google_model(model):
+        client = _google_client()
+        config = google.genai.types.GenerateContentConfig(
+            system_instruction=system_prompt,
+            max_output_tokens=max_tokens,
+        )
+        for chunk in client.models.generate_content_stream(
+            model=model,
+            contents=user_message,
+            config=config,
+        ):
+            if chunk.text:
+                yield chunk.text
+    else:
+        with _client().messages.stream(
+            model=model,
+            max_tokens=max_tokens,
+            system=system_prompt,
+            messages=[{"role": "user", "content": user_message}],
+        ) as stream:
+            for chunk in stream.text_stream:
+                yield chunk

@@ -1,0 +1,16 @@
+.env
+.env.local
+__pycache__/
+**/__pycache__/
+*.pyc
+*.pyo
+.DS_Store
+data/
+outputs/
+archive/
+platform/
+node_modules/
+.git/
+*.md
+docs/
+tooling/

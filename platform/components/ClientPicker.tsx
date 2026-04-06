@@ -20,6 +20,7 @@ function getColor(name: string) {
 export function ClientPicker({ value, onChange }: Props) {
   const [clients, setClients] = useState<Client[]>([])
   const [open, setOpen] = useState(false)
+  const [loadError, setLoadError] = useState<string | null>(null)
   const ref = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
@@ -29,7 +30,9 @@ export function ClientPicker({ value, onChange }: Props) {
         setClients(list)
         if (!value && list.length > 0) onChange(list[0])
       })
-      .catch(() => {})
+      .catch((e: unknown) => {
+        setLoadError(e instanceof Error ? e.message : 'Erro ao carregar clientes')
+      })
   }, [])
 
   useEffect(() => {
@@ -43,6 +46,9 @@ export function ClientPicker({ value, onChange }: Props) {
   return (
     <div className="space-y-1.5">
       <label className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Cliente</label>
+      {loadError && (
+        <p className="text-xs text-red-400">{loadError}</p>
+      )}
       <div ref={ref} className="relative inline-block w-full">
         <button
           type="button"

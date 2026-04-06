@@ -6,7 +6,9 @@ import { useStore } from '@/lib/store'
 import {
   Select,
   SelectContent,
+  SelectGroup,
   SelectItem,
+  SelectLabel,
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
@@ -42,12 +44,22 @@ export function Header() {
       </div>
       <div className="ml-auto flex flex-col items-end gap-1">
         <Select value={model} onValueChange={handleModelChange} disabled={savingModel}>
-          <SelectTrigger className="w-44">
+          <SelectTrigger className="w-52">
             <SelectValue placeholder="Modelo" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="claude-sonnet-4-6">Sonnet 4.6</SelectItem>
-            <SelectItem value="claude-opus-4-6">Opus 4.6</SelectItem>
+            <SelectGroup>
+              <SelectLabel>Anthropic</SelectLabel>
+              <SelectItem value="claude-sonnet-4-6">Sonnet 4.6</SelectItem>
+              <SelectItem value="claude-opus-4-6">Opus 4.6</SelectItem>
+            </SelectGroup>
+            <SelectGroup>
+              <SelectLabel>Google Gemini</SelectLabel>
+              <SelectItem value="gemini-2.0-flash">Gemini 2.0 Flash ⚡ Mais rápido</SelectItem>
+              <SelectItem value="gemini-2.0-flash-lite">Gemini 2.0 Flash Lite 💰 Mais barato</SelectItem>
+              <SelectItem value="gemini-1.5-flash">Gemini 1.5 Flash</SelectItem>
+              <SelectItem value="gemini-1.5-pro">Gemini 1.5 Pro</SelectItem>
+            </SelectGroup>
           </SelectContent>
         </Select>
         {configError && (
