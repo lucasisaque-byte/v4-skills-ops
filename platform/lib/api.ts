@@ -1,7 +1,32 @@
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'
 
+/** Mensagem amigável quando o fetch falha antes de qualquer resposta HTTP (rede, CORS, servidor fora do ar). */
+const ERRO_REDE_PT =
+  'Não foi possível contactar a API. Verifique sua conexão ou se o servidor está no ar.'
+
+function mapNetworkError(e: unknown): Error {
+  if (e instanceof Error && e.name === 'AbortError') return e
+  if (e instanceof TypeError) {
+    const m = e.message.toLowerCase()
+    if (
+      m.includes('failed to fetch') ||
+      m.includes('networkerror') ||
+      m.includes('load failed') ||
+      m.includes('network request failed')
+    ) {
+      return new Error(ERRO_REDE_PT)
+    }
+  }
+  return e instanceof Error ? e : new Error(String(e))
+}
+
 async function fetchAPI(path: string, options?: RequestInit) {
-  const res = await fetch(`${API_BASE}${path}`, options)
+  let res: Response
+  try {
+    res = await fetch(`${API_BASE}${path}`, options)
+  } catch (e) {
+    throw mapNetworkError(e)
+  }
   if (!res.ok) {
     const error = await res.text()
     throw new Error(error || `API error: ${res.status}`)
@@ -141,7 +166,10 @@ export const api = {
           onError,
         )
       })
-      .catch((e) => { if (e.name !== 'AbortError') onError(e) })
+      .catch((e) => {
+        if (e instanceof Error && e.name === 'AbortError') return
+        onError(mapNetworkError(e))
+      })
 
     return () => controller.abort()
   },
@@ -179,7 +207,10 @@ export const api = {
           onError,
         )
       })
-      .catch((e) => { if (e.name !== 'AbortError') onError(e) })
+      .catch((e) => {
+        if (e instanceof Error && e.name === 'AbortError') return
+        onError(mapNetworkError(e))
+      })
 
     return () => controller.abort()
   },
