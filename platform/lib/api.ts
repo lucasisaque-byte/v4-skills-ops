@@ -1,17 +1,19 @@
 /**
- * Em produção (browser ≠ localhost), usa proxy same-origin `/api/backend/*` (next.config rewrites → Railway)
- * para evitar falhas de fetch cross-origin (CSP, extensões, redes corporativas).
- * Em dev local, fala direto com a API em localhost:8000.
+ * URL base da API FastAPI (Railway em produção).
+ * Não usamos proxy pelo Vercel: o POST /workflow-runs espera a resposta da Anthropic (vários segundos) e o
+ * encaminhamento no edge do Vercel estoura o tempo limite → 500 genérico. Chamada direta cross-origin com
+ * CORS liberado no FastAPI evita isso.
  */
+const DEFAULT_PROD_API = 'https://v4-skills-ops-production.up.railway.app'
+
 function getApiBase(): string {
-  if (typeof window === 'undefined') {
-    return process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'
+  if (typeof window !== 'undefined') {
+    const { hostname } = window.location
+    if (hostname === 'localhost' || hostname === '127.0.0.1') {
+      return process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'
+    }
   }
-  const { hostname } = window.location
-  if (hostname === 'localhost' || hostname === '127.0.0.1') {
-    return process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'
-  }
-  return '/api/backend'
+  return process.env.NEXT_PUBLIC_API_URL || DEFAULT_PROD_API
 }
 
 /** Mensagem amigável quando o fetch falha antes de qualquer resposta HTTP (rede, CORS, servidor fora do ar). */
@@ -42,8 +44,17 @@ async function fetchAPI(path: string, options?: RequestInit) {
     throw mapNetworkError(e)
   }
   if (!res.ok) {
-    const error = await res.text()
-    throw new Error(error || `API error: ${res.status}`)
+    const text = await res.text()
+    let msg = text || `Erro na API (${res.status})`
+    try {
+      const j = JSON.parse(text) as { detail?: unknown }
+      if (j.detail !== undefined) {
+        msg = typeof j.detail === 'string' ? j.detail : JSON.stringify(j.detail)
+      }
+    } catch {
+      /* manter texto cru (ex.: HTML "Internal Server Error") */
+    }
+    throw new Error(msg)
   }
   return res.json()
 }

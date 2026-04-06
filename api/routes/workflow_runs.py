@@ -12,6 +12,7 @@ Endpoints:
   GET    /workflow-runs/templates                          — lista templates disponíveis
 """
 import json
+import logging
 import os
 from fastapi import APIRouter, HTTPException
 from fastapi.responses import StreamingResponse
@@ -29,6 +30,8 @@ from api.services.output_store import save_output
 from api.workflow import engine
 from api.workflow.registry import list_templates
 from api.routes.config import ALLOWED_MODELS
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter(tags=["workflow-runs"])
 
@@ -131,39 +134,48 @@ def create_workflow_run(req: CreateWorkflowRunRequest):
       2. Cria o WorkflowRun com steps e briefings
       3. Retorna o run + SSE URL para executar o primeiro step
     """
-    ctx = _load_client(req.client_id)
+    try:
+        ctx = _load_client(req.client_id)
 
-    # Monta descrição da tarefa a partir dos inputs
-    task_description = _build_task_description(req.task_type, req.input)
+        # Monta descrição da tarefa a partir dos inputs
+        task_description = _build_task_description(req.task_type, req.input)
 
-    validated = _validate_optional_model(req.llm_model)
-    resolved_model = validated or os.getenv("MODEL", "claude-sonnet-4-6")
+        validated = _validate_optional_model(req.llm_model)
+        resolved_model = validated or os.getenv("MODEL", "claude-sonnet-4-6")
 
-    # AM produz RuntimePlan
-    plan = plan_workflow(task_description, req.task_type, ctx, model=validated)
+        # AM produz RuntimePlan
+        plan = plan_workflow(task_description, req.task_type, ctx, model=validated)
 
-    # Engine cria e persiste o WorkflowRun
-    run = engine.create_run(
-        client_id=req.client_id,
-        client_name=ctx["client_name"],
-        plan=plan,
-        task_input=req.input,
-        llm_model=resolved_model,
-    )
+        # Engine cria e persiste o WorkflowRun
+        run = engine.create_run(
+            client_id=req.client_id,
+            client_name=ctx["client_name"],
+            plan=plan,
+            task_input=req.input,
+            llm_model=resolved_model,
+        )
 
-    first_step = engine.get_current_step(run)
+        first_step = engine.get_current_step(run)
 
-    return {
-        "run_id":       run.run_id,
-        "status":       run.status,
-        "task_summary": run.task_summary,
-        "template_id":  run.template_id,
-        "current_step": first_step.model_dump() if first_step else None,
-        "steps":        [s.model_dump(exclude={"artifacts"}) for s in run.steps],
-        "ui_summary":   plan.ui_summary.model_dump(),
-        "observations": plan.observations,
-        "stream_url":   f"/workflow-runs/{run.run_id}/steps/{first_step.step_id}/stream" if first_step else None,
-    }
+        return {
+            "run_id":       run.run_id,
+            "status":       run.status,
+            "task_summary": run.task_summary,
+            "template_id":  run.template_id,
+            "current_step": first_step.model_dump() if first_step else None,
+            "steps":        [s.model_dump(exclude={"artifacts"}) for s in run.steps],
+            "ui_summary":   plan.ui_summary.model_dump(),
+            "observations": plan.observations,
+            "stream_url":   f"/workflow-runs/{run.run_id}/steps/{first_step.step_id}/stream" if first_step else None,
+        }
+    except HTTPException:
+        raise
+    except Exception:
+        logger.exception("create_workflow_run")
+        raise HTTPException(
+            status_code=502,
+            detail="Falha ao planejar o workflow (serviço de IA). Tente novamente em instantes.",
+        )
 
 
 @router.get("/workflow-runs/{run_id}")
