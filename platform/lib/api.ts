@@ -1,4 +1,18 @@
-const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'
+/**
+ * Em produção (browser ≠ localhost), usa proxy same-origin `/api/backend/*` (next.config rewrites → Railway)
+ * para evitar falhas de fetch cross-origin (CSP, extensões, redes corporativas).
+ * Em dev local, fala direto com a API em localhost:8000.
+ */
+function getApiBase(): string {
+  if (typeof window === 'undefined') {
+    return process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'
+  }
+  const { hostname } = window.location
+  if (hostname === 'localhost' || hostname === '127.0.0.1') {
+    return process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'
+  }
+  return '/api/backend'
+}
 
 /** Mensagem amigável quando o fetch falha antes de qualquer resposta HTTP (rede, CORS, servidor fora do ar). */
 const ERRO_REDE_PT =
@@ -23,7 +37,7 @@ function mapNetworkError(e: unknown): Error {
 async function fetchAPI(path: string, options?: RequestInit) {
   let res: Response
   try {
-    res = await fetch(`${API_BASE}${path}`, options)
+    res = await fetch(`${getApiBase()}${path}`, options)
   } catch (e) {
     throw mapNetworkError(e)
   }
@@ -147,7 +161,7 @@ export const api = {
   ) => {
     const controller = new AbortController()
 
-    fetch(`${API_BASE}/workflow-runs/${run_id}/steps/${step_id}/stream`, {
+    fetch(`${getApiBase()}/workflow-runs/${run_id}/steps/${step_id}/stream`, {
       signal: controller.signal,
     })
       .then(async (res) => {
@@ -185,7 +199,7 @@ export const api = {
   ) => {
     const controller = new AbortController()
 
-    fetch(`${API_BASE}${endpoint}`, {
+    fetch(`${getApiBase()}${endpoint}`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(data),
